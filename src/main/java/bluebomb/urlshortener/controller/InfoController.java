@@ -41,7 +41,7 @@ public class InfoController {
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    public static void sendOriginalUrlToSubscriber(String sessionId, String sequence, String originalURL,
+    private static void sendOriginalUrlToSubscriber(String sessionId, String sequence, String originalURL,
                                                    SimpMessagingTemplate simpMessagingTemplate) {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
@@ -63,7 +63,7 @@ public class InfoController {
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    public static void sendErrorToSubscriber(String sessionId, String sequence, String error,
+    private static void sendErrorToSubscriber(String sessionId, String sequence, String error,
                                              SimpMessagingTemplate simpMessagingTemplate) {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
@@ -90,6 +90,8 @@ public class InfoController {
                                              @Header("simpSessionId") String simpSessionId,
                                              @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
     ) throws ShortenedInfoException, DatabaseInternalException {
+
+        System.out.println("Subscripcion ha llegado");
 
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
@@ -144,6 +146,7 @@ public class InfoController {
      *
      * @param e exception captured
      */
+    @SuppressWarnings("unused")
     @MessageExceptionHandler({DatabaseInternalException.class, ShortenedInfoException.class})
     public void errorHandlerGetInfo(Exception e) {
         if (e instanceof ShortenedInfoException) {

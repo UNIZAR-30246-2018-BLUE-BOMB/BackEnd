@@ -2,10 +2,11 @@ package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.exceptions.ShortenedInfoException;
 import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.RedirectURL;
 import bluebomb.urlshortener.model.ShortenedInfo;
-import bluebomb.urlshortener.model.URL;
 import bluebomb.urlshortener.services.AvailableURI;
 import bluebomb.urlshortener.services.UserAgentDetection;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -40,19 +41,39 @@ public class InfoController {
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    public static void sendOriginalUrlToSubscriber(String sequence, URL originalURL, String sessionId,
+    public static void sendOriginalUrlToSubscriber(String sessionId, String sequence, String originalURL,
                                                    SimpMessagingTemplate simpMessagingTemplate) {
-        logger.info("Ha llegado al return enviar mensaje");
-        logger.info("Destino del mensaje: " + "/ws/" + sequence + "/info");
-        logger.info("Destino del mensaje: " + sessionId);
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
                 .create(SimpMessageType.MESSAGE);
         headerAccessor.setSessionId(sessionId);
         headerAccessor.setLeaveMutable(true);
 
-        simpMessagingTemplate.convertAndSendToUser(sessionId, "/ws/" + sequence + "/info",
-                new ShortenedInfo(originalURL.getURL(), "", 0),
+        simpMessagingTemplate.convertAndSendToUser(sessionId,
+                sequence + "/info",
+                new ShortenedInfo(originalURL, "", 0),
+                headerAccessor.getMessageHeaders());
+    }
+
+    /**
+     * Send original url to subscriber
+     *
+     * @param sequence              sequence that user request for
+     * @param error                 error to send to subscriber
+     * @param sessionId             session if of the user that should receive the original url
+     * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
+     */
+    public static void sendErrorToSubscriber(String sessionId, String sequence, String error,
+                                             SimpMessagingTemplate simpMessagingTemplate) {
+
+        SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
+                .create(SimpMessageType.MESSAGE);
+        headerAccessor.setSessionId(sessionId);
+        headerAccessor.setLeaveMutable(true);
+
+        simpMessagingTemplate.convertAndSendToUser(sessionId,
+                "/queue/error/" + sequence + "/info",
+                error,
                 headerAccessor.getMessageHeaders());
     }
 
@@ -65,23 +86,23 @@ public class InfoController {
      * @return original URL if no ad and add URL and the time to wait in the other case
      */
     @SubscribeMapping("/{sequence}/info")
-    public ShortenedInfo getShortenedURLInfo(SimpMessageHeaderAccessor headerAccessor, @DestinationVariable String sequence,
+    public ShortenedInfo getShortenedURLInfo(@DestinationVariable String sequence,
                                              @Header("simpSessionId") String simpSessionId,
                                              @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
-    ) throws Exception {
+    ) throws ShortenedInfoException, DatabaseInternalException {
 
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
 
         if (!DatabaseApi.getInstance().containsSequence(sequence)) {
             // Unavailable sequence
-            throw new Exception("Error: Unavailable sequence: " + sequence);
+            throw new ShortenedInfoException("Unavailable sequence", sequence, simpSessionId);
         }
 
         if (!AvailableURI.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURI.getInstance()
                 .isSequenceAvailable(sequence)) {
             // Sequence non reachable
-            throw new Exception("Error: Sequence non reachable: " + sequence);
+            throw new ShortenedInfoException("Sequence non reachable", sequence, simpSessionId);
         }
 
         // Update statics
@@ -108,25 +129,30 @@ public class InfoController {
             new Thread(() -> {
                 // Start a thread that notify user when ad time has end
                 try {
-                    Thread.sleep(ad.getSecondsToRedirect() * 1000);
+                    Thread.sleep(ad.getSecondsToRedirect() * 1000L);
                 } catch (Exception e) {
                     // Error when thread try to sleep
                 }
-                InfoController.sendOriginalUrlToSubscriber(sequence, new URL(originalURL), simpSessionId, simpMessagingTemplate);
+                InfoController.sendOriginalUrlToSubscriber(sequence, originalURL, simpSessionId, simpMessagingTemplate);
             }).start();
-            logger.info("Ha llegado el return normal");
             return new ShortenedInfo("", CommonValues.BACK_END_URI + sequence + "/ads", ad.getSecondsToRedirect());
         }
     }
 
     /**
-     * Catch getGetGlobalStats produced Exceptions
+     * Catch /{sequence}/info produced Exceptions
      *
      * @param e exception captured
-     * @return error message
      */
-    @MessageExceptionHandler
-    public String errorHandlerGetInfo(Exception e) {
-        return e.getMessage();
+    @MessageExceptionHandler({DatabaseInternalException.class, ShortenedInfoException.class})
+    public void errorHandlerGetInfo(Exception e) {
+        if (e instanceof ShortenedInfoException) {
+            // User error
+            ShortenedInfoException ex = (ShortenedInfoException) e;
+            sendErrorToSubscriber(ex.getUsername(), ex.getSequence(), ex.getMessage(), simpMessagingTemplate);
+        }else {
+            // Server error
+            logger.error(e.getMessage());
+        }
     }
 }

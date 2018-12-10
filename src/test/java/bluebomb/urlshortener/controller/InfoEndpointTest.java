@@ -112,7 +112,7 @@ public class InfoEndpointTest {
         final CountDownLatch messagesToReceive = new CountDownLatch(2);
         InfoEndpointStompFrameHandler messageHandler = new InfoEndpointStompFrameHandler(messagesToReceive);
 
-        final String websocketSubscriptionPath = "/ws/" + shortenedSequence + "/info";
+        final String websocketSubscriptionPath = "/user/ws/" + shortenedSequence + "/info";
 
         StompSessionHandler handler = new InfoEndpointStompSessionHandler(failure, messageHandler, websocketSubscriptionPath, messagesToReceive);
 

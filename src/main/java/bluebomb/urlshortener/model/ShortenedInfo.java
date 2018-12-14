@@ -1,7 +1,8 @@
 package bluebomb.urlshortener.model;
 
 public class ShortenedInfo {
-    private String HeadURL;
+    private String sequence;
+    private String headURL;
     private String interstitialURL;
     private Integer secondsToRedirect;
 
@@ -9,34 +10,44 @@ public class ShortenedInfo {
 
     }
 
-    public ShortenedInfo(String HeadURL, String interstitialURL, Integer secondsToRedirect) {
-        this.HeadURL = HeadURL;
+    public ShortenedInfo(String sequence, String headURL, String interstitialURL, Integer secondsToRedirect) {
+        this.sequence = sequence;
+        this.headURL = headURL;
         this.interstitialURL = interstitialURL;
         this.secondsToRedirect = secondsToRedirect;
     }
 
     public String getHeadURL() {
-        return HeadURL;
-    }
-
-    public String getinterstitialURL() {
-        return interstitialURL;
+        return headURL;
     }
 
     public void setHeadURL(String headURL) {
-        HeadURL = headURL;
+        this.headURL = headURL;
     }
 
     public void setInterstitialURL(String interstitialURL) {
         this.interstitialURL = interstitialURL;
     }
 
-    public void setSecondsToRedirect(Integer secondsToRedirect) {
-        this.secondsToRedirect = secondsToRedirect;
+    public String getInterstitialURL() {
+        return interstitialURL;
     }
 
-    public Integer getsecondsToRedirect() {
+    public String getSequence() {
+        return sequence;
+    }
+
+    public void setSequence(String sequence) {
+        this.sequence = sequence;
+    }
+
+
+    public Integer getSecondsToRedirect() {
         return secondsToRedirect;
+    }
+
+    public void setSecondsToRedirect(Integer secondsToRedirect) {
+        this.secondsToRedirect = secondsToRedirect;
     }
 
 }

@@ -3,6 +3,7 @@ package bluebomb.urlshortener.controller;
 import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.model.ErrorMessageWS;
 import bluebomb.urlshortener.model.ShortenedInfo;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,14 +84,13 @@ public class InfoEndpointTest {
             ArrayList<ShortenedInfo> messagesCaptured = handler.getMessagesCaptured();
             assertEquals(1, messagesCaptured.size());
             assertEquals(headURL, messagesCaptured.get(0).getHeadURL());
-            assertEquals("", messagesCaptured.get(0).getinterstitialURL());
-            assert (messagesCaptured.get(0).getsecondsToRedirect() == 0);
+            assertEquals("", messagesCaptured.get(0).getInterstitialURL());
+            assert (messagesCaptured.get(0).getSecondsToRedirect() == 0);
         } else {
             fail("Original URL not received");
         }
     }
 
-    // TODO: No pasa el test ya que el usuario especifico no recibe el segundo mensaje
     @Test
     public void infoEndpointWithAd() throws Exception {
         final String headURL = "http://www.google.de";
@@ -127,11 +127,11 @@ public class InfoEndpointTest {
                 assertEquals(2, messagesCaptured.size());
 
                 assertEquals("", messagesCaptured.get(0).getHeadURL());
-                assertEquals(CommonValues.SHORTENED_URI_PREFIX + shortenedSequence + "/ad", messagesCaptured.get(0).getinterstitialURL());
-                assertEquals(secondsToRedirect, messagesCaptured.get(0).getsecondsToRedirect());
+                assertEquals(CommonValues.BACK_END_URI + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
+                assertEquals(secondsToRedirect, messagesCaptured.get(0).getSecondsToRedirect());
 
-                assertEquals("", messagesCaptured.get(1).getinterstitialURL());
-                assertEquals(new Integer(0), messagesCaptured.get(1).getsecondsToRedirect());
+                assertEquals("", messagesCaptured.get(1).getInterstitialURL());
+                assertEquals(new Integer(0), messagesCaptured.get(1).getSecondsToRedirect());
                 assertEquals(headURL, messagesCaptured.get(1).getHeadURL());
             } else {
                 fail("Original URL not received");
@@ -153,7 +153,7 @@ public class InfoEndpointTest {
 
         if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
             if (failure.get() != null) {
-                throw new AssertionError("", failure.get());
+                assert failure.get().getMessage().equals("Unavailable sequence");
             } else
                 fail("Errors not working");
         } else {
@@ -185,12 +185,9 @@ public class InfoEndpointTest {
             session.subscribe("/user/queue/error/" + sequence + "/info", errorFrameHandler);
 
             // Subscribe to user
-          //  session.subscribe("/user/" + sequence + "/info", shortenedInfoFrameHandler);
+            session.subscribe("/user/info/" + sequence, shortenedInfoFrameHandler);
 
-            // Subscribe to topic
-            session.subscribe("/topic/" + sequence + "/info", shortenedInfoFrameHandler);
-            System.out.println("Test: Suscrito a " + "/topic/" + sequence + "/info" );
-
+            session.send("/app/info", sequence);
         }
 
         @Override
@@ -236,7 +233,6 @@ public class InfoEndpointTest {
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            System.out.println("Mensaje en handleFrame");
             messagesCaptured.add((ShortenedInfo) payload);
             latch.countDown();
         }
@@ -260,12 +256,12 @@ public class InfoEndpointTest {
 
         @Override
         public Type getPayloadType(StompHeaders headers) {
-            return String.class;
+            return ErrorMessageWS.class;
         }
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            this.failure.set(new Throwable((String) payload));
+            this.failure.set(new Throwable(((ErrorMessageWS) payload).getError()));
             while (latch.getCount() > 0)
                 latch.countDown();
         }

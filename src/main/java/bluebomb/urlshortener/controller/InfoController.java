@@ -1,10 +1,10 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
 import bluebomb.urlshortener.model.ClickStat;
+import bluebomb.urlshortener.model.ErrorMessageWS;
 import bluebomb.urlshortener.model.RedirectURL;
 import bluebomb.urlshortener.model.ShortenedInfo;
 import bluebomb.urlshortener.services.AvailableURI;
@@ -16,11 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import bluebomb.urlshortener.config.CommonValues;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -41,8 +42,8 @@ public class InfoController {
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    private static void sendOriginalUrlToSubscriber(String sessionId, String sequence, String originalURL,
-                                                   SimpMessagingTemplate simpMessagingTemplate) {
+    private void sendShortenedInfoToSubscriber(String sessionId, ShortenedInfo shortenedInfo,
+                                               SimpMessagingTemplate simpMessagingTemplate) {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
                 .create(SimpMessageType.MESSAGE);
@@ -50,8 +51,8 @@ public class InfoController {
         headerAccessor.setLeaveMutable(true);
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
-                sequence + "/info",
-                new ShortenedInfo(originalURL, "", 0),
+                "/info/" + shortenedInfo.getSequence() ,
+                shortenedInfo,
                 headerAccessor.getMessageHeaders());
     }
 
@@ -63,8 +64,8 @@ public class InfoController {
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    private static void sendErrorToSubscriber(String sessionId, String sequence, String error,
-                                             SimpMessagingTemplate simpMessagingTemplate) {
+    private void sendErrorToSubscriber(String sessionId, String sequence, String error,
+                                       SimpMessagingTemplate simpMessagingTemplate) {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
                 .create(SimpMessageType.MESSAGE);
@@ -73,7 +74,7 @@ public class InfoController {
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
                 "/queue/error/" + sequence + "/info",
-                error,
+                new ErrorMessageWS(error),
                 headerAccessor.getMessageHeaders());
     }
 
@@ -85,13 +86,14 @@ public class InfoController {
      * @param simpSessionAttributes attributes
      * @return original URL if no ad and add URL and the time to wait in the other case
      */
-    @SubscribeMapping("/{sequence}/info")
-    public ShortenedInfo getShortenedURLInfo(@DestinationVariable String sequence,
-                                             @Header("simpSessionId") String simpSessionId,
-                                             @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
+    @MessageMapping("/info")
+    public void getShortenedURLInfo(String sequence,
+                                    @Header("simpSessionId") String simpSessionId,
+                                    @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
     ) throws ShortenedInfoException, DatabaseInternalException {
 
         System.out.println("Subscripcion ha llegado");
+        System.out.println(sequence);
 
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
@@ -126,7 +128,9 @@ public class InfoController {
         RedirectURL ad = DatabaseApi.getInstance().getAd(sequence);
         String originalURL = DatabaseApi.getInstance().getHeadURL(sequence);
         if (ad == null) {
-            return new ShortenedInfo(originalURL, "", 0);
+            sendShortenedInfoToSubscriber(simpSessionId,
+                    new ShortenedInfo(sequence, originalURL, "", 0),
+                    simpMessagingTemplate);
         } else {
             new Thread(() -> {
                 // Start a thread that notify user when ad time has end
@@ -135,9 +139,13 @@ public class InfoController {
                 } catch (Exception e) {
                     // Error when thread try to sleep
                 }
-                InfoController.sendOriginalUrlToSubscriber(sequence, originalURL, simpSessionId, simpMessagingTemplate);
+                sendShortenedInfoToSubscriber(simpSessionId,
+                        new ShortenedInfo(sequence, originalURL, "", 0),
+                        simpMessagingTemplate);
             }).start();
-            return new ShortenedInfo("", CommonValues.BACK_END_URI + sequence + "/ads", ad.getSecondsToRedirect());
+            sendShortenedInfoToSubscriber(simpSessionId,
+                    new ShortenedInfo(sequence, "", CommonValues.BACK_END_URI + sequence + "/ads", ad.getSecondsToRedirect()),
+                    simpMessagingTemplate);
         }
     }
 
@@ -153,7 +161,7 @@ public class InfoController {
             // User error
             ShortenedInfoException ex = (ShortenedInfoException) e;
             sendErrorToSubscriber(ex.getUsername(), ex.getSequence(), ex.getMessage(), simpMessagingTemplate);
-        }else {
+        } else {
             // Server error
             logger.error(e.getMessage());
         }

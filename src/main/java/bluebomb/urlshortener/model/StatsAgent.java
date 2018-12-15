@@ -3,7 +3,7 @@ package bluebomb.urlshortener.model;
 import java.util.Objects;
 
 public class StatsAgent {
-    private String agent = null;
+    private String agent;
 
     public StatsAgent(String agent) {
         this.agent = agent;

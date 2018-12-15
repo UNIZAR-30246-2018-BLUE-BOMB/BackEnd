@@ -4,7 +4,7 @@ package bluebomb.urlshortener.model;
  * Browser
  */
 public class Browser {
-    private String browser = null;
+    private String browser;
 
     public Browser(String browser) {
         this.browser = browser;

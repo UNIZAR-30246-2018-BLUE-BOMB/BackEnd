@@ -3,10 +3,7 @@ package bluebomb.urlshortener.controller;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
-import bluebomb.urlshortener.model.ClickStat;
-import bluebomb.urlshortener.model.ErrorMessageWS;
-import bluebomb.urlshortener.model.RedirectURL;
-import bluebomb.urlshortener.model.ShortenedInfo;
+import bluebomb.urlshortener.model.*;
 import bluebomb.urlshortener.services.AvailableURI;
 import bluebomb.urlshortener.services.UserAgentDetection;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -22,7 +19,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import bluebomb.urlshortener.config.CommonValues;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @Controller
@@ -89,9 +85,6 @@ public class InfoController {
                                     @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
     ) throws ShortenedInfoException, DatabaseInternalException {
 
-        System.out.println("Subscripcion ha llegado");
-        System.out.println(sequence);
-
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
 
@@ -112,14 +105,21 @@ public class InfoController {
         ImmutablePair<Integer, Integer> newStatics = DatabaseApi.getInstance().addStats(sequence, os, browser);
 
         // Notify new statics to all subscribers
-        ArrayList<ClickStat> clickStatOS = new ArrayList<>();
-        clickStatOS.add(new ClickStat(os, newStatics.getRight()));
+        ClickStat clickStatOS = new ClickStat(os, newStatics.getRight());
+        ClickStat clickStatBrowser = new ClickStat(browser, newStatics.getLeft());
 
-        ArrayList<ClickStat> clickStatBrowser = new ArrayList<>();
-        clickStatBrowser.add(new ClickStat(browser, newStatics.getLeft()));
-
-        StatsGlobalController.sendStatsToGlobalStatsSubscribers(sequence, "os", clickStatOS, simpMessagingTemplate);
-        StatsGlobalController.sendStatsToGlobalStatsSubscribers(sequence, "browser", clickStatBrowser, simpMessagingTemplate);
+        StatsGlobalController.sendStatsToGlobalStatsSubscribers(
+                sequence,
+                "os",
+                new GlobalStats(sequence, "os", clickStatOS),
+                simpMessagingTemplate
+        );
+        StatsGlobalController.sendStatsToGlobalStatsSubscribers(
+                sequence,
+                "browser",
+                new GlobalStats(sequence, "browser", clickStatBrowser),
+                simpMessagingTemplate
+        );
 
         // If adds send ad and start thread and if not return url
         RedirectURL ad = DatabaseApi.getInstance().getAd(sequence);

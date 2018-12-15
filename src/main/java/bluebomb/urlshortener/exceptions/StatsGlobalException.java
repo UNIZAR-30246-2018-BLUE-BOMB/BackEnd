@@ -1,9 +1,9 @@
 package bluebomb.urlshortener.exceptions;
 
-public class ShortenedInfoException extends Exception{
+public class StatsGlobalException extends Exception{
     private String username;
 
-    public ShortenedInfoException(String message, String username) {
+    public StatsGlobalException(String message, String username) {
         super(message);
         this.username = username;
     }

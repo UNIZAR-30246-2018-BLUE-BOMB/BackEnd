@@ -13,7 +13,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -37,9 +36,8 @@ public class InfoController {
     /**
      * Send original url to subscriber
      *
-     * @param sequence              sequence that user request for
-     * @param originalURL           original url associated with sequence
      * @param sessionId             session if of the user that should receive the original url
+     * @param shortenedInfo         original url associated with sequence
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
     private void sendShortenedInfoToSubscriber(String sessionId, ShortenedInfo shortenedInfo,
@@ -51,20 +49,19 @@ public class InfoController {
         headerAccessor.setLeaveMutable(true);
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
-                "/info/" + shortenedInfo.getSequence() ,
+                "/info/" + shortenedInfo.getSequence(),
                 shortenedInfo,
                 headerAccessor.getMessageHeaders());
     }
 
     /**
-     * Send original url to subscriber
+     * Send error to subscriber
      *
-     * @param sequence              sequence that user request for
      * @param error                 error to send to subscriber
      * @param sessionId             session if of the user that should receive the original url
      * @param simpMessagingTemplate a SimpMessagingTemplate instance to perform the call
      */
-    private void sendErrorToSubscriber(String sessionId, String sequence, String error,
+    private void sendErrorToSubscriber(String sessionId, String error,
                                        SimpMessagingTemplate simpMessagingTemplate) {
 
         SimpMessageHeaderAccessor headerAccessor = SimpMessageHeaderAccessor
@@ -73,7 +70,7 @@ public class InfoController {
         headerAccessor.setLeaveMutable(true);
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
-                "/queue/error/" + sequence + "/info",
+                "/queue/error/info",
                 new ErrorMessageWS(error),
                 headerAccessor.getMessageHeaders());
     }
@@ -84,8 +81,8 @@ public class InfoController {
      * @param sequence              shortened URL sequence code
      * @param simpSessionId         session id
      * @param simpSessionAttributes attributes
-     * @return original URL if no ad and add URL and the time to wait in the other case
      */
+    @SuppressWarnings("unused")
     @MessageMapping("/info")
     public void getShortenedURLInfo(String sequence,
                                     @Header("simpSessionId") String simpSessionId,
@@ -100,13 +97,13 @@ public class InfoController {
 
         if (!DatabaseApi.getInstance().containsSequence(sequence)) {
             // Unavailable sequence
-            throw new ShortenedInfoException("Unavailable sequence", sequence, simpSessionId);
+            throw new ShortenedInfoException("Unavailable sequence: " + sequence, simpSessionId);
         }
 
         if (!AvailableURI.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURI.getInstance()
                 .isSequenceAvailable(sequence)) {
             // Sequence non reachable
-            throw new ShortenedInfoException("Sequence non reachable", sequence, simpSessionId);
+            throw new ShortenedInfoException("Sequence non reachable: " + sequence, simpSessionId);
         }
 
         // Update statics
@@ -160,7 +157,7 @@ public class InfoController {
         if (e instanceof ShortenedInfoException) {
             // User error
             ShortenedInfoException ex = (ShortenedInfoException) e;
-            sendErrorToSubscriber(ex.getUsername(), ex.getSequence(), ex.getMessage(), simpMessagingTemplate);
+            sendErrorToSubscriber(ex.getUsername(), ex.getMessage(), simpMessagingTemplate);
         } else {
             // Server error
             logger.error(e.getMessage());

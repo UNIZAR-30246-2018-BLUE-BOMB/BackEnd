@@ -1,11 +1,11 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.ErrorMessageWS;
-import bluebomb.urlshortener.model.ShortenedInfo;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,7 +32,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class InfoEndpointTest {
+public class GlobalStatsEndpointTest {
 
     @LocalServerPort
     private int port;
@@ -52,8 +52,10 @@ public class InfoEndpointTest {
         this.headers.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:63.0) Gecko/20100101 Firefox/63.0");
     }
 
+    // TODO:
+    @Ignore
     @Test
-    public void infoEndpointWithOutAd() throws Exception {
+    public void globalStatsEndpoint() throws Exception {
         final String headURL = "http://www.google.de";
         String shortenedSequence = "";
         try {
@@ -68,7 +70,7 @@ public class InfoEndpointTest {
 
         final CountDownLatch messagesToReceive = new CountDownLatch(1);
 
-        InfoEndpointStompSessionHandler handler = new InfoEndpointStompSessionHandler(failure, shortenedSequence, messagesToReceive);
+    /*    GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure, shortenedSequence, messagesToReceive);
 
         this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
 
@@ -76,64 +78,17 @@ public class InfoEndpointTest {
             if (failure.get() != null) {
                 throw new AssertionError("", failure.get());
             }
-            ArrayList<ShortenedInfo> messagesCaptured = handler.getMessagesCaptured();
+           ArrayList<ShortenedInfo> messagesCaptured = handler.getMessagesCaptured();
             assertEquals(1, messagesCaptured.size());
             assertEquals(headURL, messagesCaptured.get(0).getHeadURL());
             assertEquals("", messagesCaptured.get(0).getInterstitialURL());
             assert (messagesCaptured.get(0).getSecondsToRedirect() == 0);
         } else {
             fail("Original URL not received");
-        }
+        }*/
     }
 
-    @Test
-    public void infoEndpointWithAd() throws Exception {
-        final String headURL = "http://www.google.de";
-        final Integer secondsToRedirect = 10;
-        String shortenedSequence = "";
-
-        try {
-            // Create shortened URL if not exist
-            shortenedSequence = DatabaseApi.getInstance().createShortURL("http://www.google.de", "http://www.unizar.es", secondsToRedirect);
-        } catch (DatabaseInternalException e) {
-            System.out.println(e.getMessage());
-            assert false;
-        }
-
-        final AtomicReference<Throwable> failure = new AtomicReference<>();
-
-        final CountDownLatch messagesToReceive = new CountDownLatch(2);
-
-        InfoEndpointStompSessionHandler handler = new InfoEndpointStompSessionHandler(failure, shortenedSequence, messagesToReceive);
-
-        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
-
-        if (messagesToReceive.await(4, TimeUnit.SECONDS)) {
-            if (failure.get() != null) {
-                throw new AssertionError("", failure.get());
-            } else
-                fail("Original URL received too early");
-        } else {
-            if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
-                if (failure.get() != null) {
-                    throw new AssertionError("", failure.get());
-                }
-                ArrayList<ShortenedInfo> messagesCaptured = handler.getMessagesCaptured();
-                assertEquals(2, messagesCaptured.size());
-
-                assertEquals("", messagesCaptured.get(0).getHeadURL());
-                assertEquals(CommonValues.BACK_END_URI + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
-                assertEquals(secondsToRedirect, messagesCaptured.get(0).getSecondsToRedirect());
-
-                assertEquals("", messagesCaptured.get(1).getInterstitialURL());
-                assertEquals(new Integer(0), messagesCaptured.get(1).getSecondsToRedirect());
-                assertEquals(headURL, messagesCaptured.get(1).getHeadURL());
-            } else {
-                fail("Original URL not received");
-            }
-        }
-    }
-
+    @Ignore
     @Test
     public void serverProduceError() throws Exception {
         final AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -142,13 +97,15 @@ public class InfoEndpointTest {
 
         final String sequence = "secuenciaquenoexiste";
 
-        StompSessionHandler handler = new InfoEndpointStompSessionHandler(failure, sequence, messagesToReceive);
+        final String agent = "os";
+
+        StompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,sequence, agent, messagesToReceive);
 
         this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
 
         if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
             if (failure.get() != null) {
-                assert failure.get().getMessage().equals("Unavailable sequence: " + sequence);
+                assert failure.get().getMessage().equals("Unavailable sequence");
             } else
                 fail("Errors not working");
         } else {
@@ -157,32 +114,32 @@ public class InfoEndpointTest {
 
     }
 
-    private class InfoEndpointStompSessionHandler extends StompSessionHandlerAdapter {
+    private class GlobalStatsEndpointStompSessionHandler extends StompSessionHandlerAdapter {
 
         private final AtomicReference<Throwable> failure;
-        private final ShortenedInfoFrameHandler shortenedInfoFrameHandler;
+        private final ClickStatArrayListFrameHandler shortenedInfoFrameHandler;
         private final ErrorFrameHandler errorFrameHandler;
         private final String sequence;
+        private final String parameter;
         private final CountDownLatch latch;
 
-        InfoEndpointStompSessionHandler(AtomicReference<Throwable> failure,
-                                        String subscriptionEndpoint, CountDownLatch latch) {
+        GlobalStatsEndpointStompSessionHandler(AtomicReference<Throwable> failure,
+                                               String sequence, String parameter, CountDownLatch latch) {
             this.failure = failure;
-            this.sequence = subscriptionEndpoint;
+            this.sequence = sequence;
+            this.parameter = parameter;
             this.latch = latch;
-            shortenedInfoFrameHandler = new ShortenedInfoFrameHandler(latch);
+            shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(latch);
             errorFrameHandler = new ErrorFrameHandler(latch, failure);
         }
 
         @Override
         public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
             // Subscribe to errors
-            session.subscribe("/user/queue/error/info", errorFrameHandler);
+            session.subscribe("/user/queue/error/stats/global", errorFrameHandler);
 
-            // Subscribe to user
-            session.subscribe("/user/info/" + sequence, shortenedInfoFrameHandler);
-
-            session.send("/app/info", sequence);
+            // Subscribe to topic
+            session.subscribe("/topic/stats/" + parameter + "/global/" + sequence, shortenedInfoFrameHandler);
         }
 
         @Override
@@ -204,7 +161,7 @@ public class InfoEndpointTest {
                 latch.countDown();
         }
 
-        ArrayList<ShortenedInfo> getMessagesCaptured() {
+        ArrayList<ArrayList<ClickStat>> getMessagesCaptured() {
             return shortenedInfoFrameHandler.getMessagesCaptured();
         }
 
@@ -213,26 +170,28 @@ public class InfoEndpointTest {
     /**
      * Message handler
      */
-    private static class ShortenedInfoFrameHandler implements StompFrameHandler {
+    private static class ClickStatArrayListFrameHandler implements StompFrameHandler {
         private CountDownLatch latch;
-        private ArrayList<ShortenedInfo> messagesCaptured = new ArrayList<>();
+        private ArrayList<ArrayList<ClickStat>> messagesCaptured = new ArrayList<>();
 
-        ShortenedInfoFrameHandler(CountDownLatch latch) {
+        ClickStatArrayListFrameHandler(CountDownLatch latch) {
             this.latch = latch;
         }
 
         @Override
         public Type getPayloadType(StompHeaders headers) {
-            return ShortenedInfo.class;
+            return ArrayList.class;
         }
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            messagesCaptured.add((ShortenedInfo) payload);
-            latch.countDown();
+            if(payload instanceof ArrayList){
+                messagesCaptured.add((ArrayList<ClickStat>) payload);
+                latch.countDown();
+            }
         }
 
-        ArrayList<ShortenedInfo> getMessagesCaptured() {
+        ArrayList<ArrayList<ClickStat>> getMessagesCaptured() {
             return messagesCaptured;
         }
     }

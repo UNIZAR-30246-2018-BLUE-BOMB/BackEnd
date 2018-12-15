@@ -1,7 +1,7 @@
 package bluebomb.urlshortener.model;
 
 public class URL {
-    private String URL = null;
+    private String URL;
 
     public URL(String URL) {
         this.URL = URL;

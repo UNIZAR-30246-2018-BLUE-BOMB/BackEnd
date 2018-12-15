@@ -1,4 +1,4 @@
-package bluebomb.urlshortener;
+package bluebomb.urlshortener.service;
 
 import bluebomb.urlshortener.model.Size;
 import bluebomb.urlshortener.qr.QRCodeGenerator;
@@ -26,24 +26,16 @@ public class QRCodeGeneratorTest {
             URL urlR = new URL("http://www.unizar.es/profiles/unizarwww/themes/unizar01/img/logo_iberus.png");
             logo = ImageIO.read(urlR);
         } catch (Exception w) {
+            assert false;
             throw new RuntimeException(w);
         }
 
         try {
             QRCodeGenerator.generate(url, format, size, errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
         } catch (Exception w) {
+            assert false;
             throw new RuntimeException(w);
         }
 
-    }
-
-    @Test
-    public void pruebaHex(){
-        int r = parseHexadecimalToInt("0xFF000000");
-        int i = 0xFF000000;
-    }
-
-    private int parseHexadecimalToInt(String hex) {
-        return (int) Long.parseLong(hex.substring(2),16);
     }
 }

@@ -1,8 +1,11 @@
 package bluebomb.urlshortener.model;
 
 public class ClickStat {
-    private String agent = null;
-    private Integer clicks = null;
+    private String agent;
+    private Integer clicks ;
+
+    public ClickStat() {
+    }
 
     public ClickStat(String agent, Integer clicks) {
         this.agent = agent;
@@ -23,14 +26,6 @@ public class ClickStat {
 
     public void setClicks(Integer clicks) {
         this.clicks = clicks;
-    }
-    
-    @Override
-    public String toString() {
-        return "{" +
-            " agent='" + getAgent() + "'" +
-            ", clicks='" + getClicks() + "'" +
-            "}";
     }
 }
 

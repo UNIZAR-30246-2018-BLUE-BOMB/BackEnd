@@ -119,7 +119,7 @@ public class AvailableURI {
                 }
                 return isAvailable;
             } else {
-                return false;
+                return true;
             }
         } catch (DatabaseInternalException e) {
             return false;

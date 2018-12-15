@@ -1,4 +1,4 @@
-package bluebomb.urlshortener;
+package bluebomb.urlshortener.service;
 
 import bluebomb.urlshortener.services.AvailableURI;
 import org.junit.Test;

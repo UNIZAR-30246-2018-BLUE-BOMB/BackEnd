@@ -1,8 +1,8 @@
 package bluebomb.urlshortener.model;
 
 public class RedirectURL {
-    private Integer secondsToRedirect = null;
-    private String interstitialURL = null;
+    private Integer secondsToRedirect;
+    private String interstitialURL;
 
     public RedirectURL(Integer secondsToRedirect, String interstitialURL) {
         this.secondsToRedirect = secondsToRedirect;
@@ -23,14 +23,6 @@ public class RedirectURL {
 
     public void setInterstitialURL(String interstitialURL) {
         this.interstitialURL = interstitialURL;
-    }
-    
-    @Override
-    public String toString() {
-        return "{" +
-            " secondsToRedirect='" + getSecondsToRedirect() + "'" +
-            ", interstitialURL='" + getInterstitialURL() + "'" +
-            "}";
     }
 }
 

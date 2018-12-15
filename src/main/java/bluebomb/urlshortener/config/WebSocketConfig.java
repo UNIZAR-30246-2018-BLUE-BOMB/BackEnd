@@ -12,14 +12,23 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/ws");
-        config.setApplicationDestinationPrefixes("/ws");
+        config.enableSimpleBroker(
+                "/topic/stats/global", // Real time global stats
+                "/stats/global", // Real time global stats
+                "/queue/error/stats/global", // Global stats errors
+                "/info", // Info url request
+                "/queue/error/info" //  Info url errors
+        );
+
+        config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Add endpoint and disable CORS
-        registry.addEndpoint("/ws").setAllowedOrigins("*");
-        registry.addEndpoint("/ws").setAllowedOrigins("*").withSockJS();
+        registry.addEndpoint("/ws")
+                .addInterceptors(new WebSocketHandshakeInterceptor())
+                .setAllowedOrigins("*")
+                .withSockJS();
     }
 }

@@ -9,8 +9,8 @@ import java.util.Date;
  */
 
 public class Stats {
-    private Date day = null;
-    private ArrayList<ClickStat> clickStat = null;
+    private Date day;
+    private ArrayList<ClickStat> clickStat;
 
     public Stats(Date day, ArrayList<ClickStat> clickStat) {
         this.day = day;
@@ -33,12 +33,5 @@ public class Stats {
         this.clickStat = clickStat;
     }
 
-    @Override
-    public String toString() {
-        return "{" +
-            " day='" + getDay() + "'" +
-            ", clickStat='" + getClickStat() + "'" +
-            "}\n";
-    }
 }
 

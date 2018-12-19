@@ -40,6 +40,9 @@ dependencies {
     // User agent detection
     compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'
 
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    
     // QR generator
     compile "com.google.zxing:core:3.3.0"
     compile 'com.google.zxing:javase:3.3.0'

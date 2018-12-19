@@ -52,7 +52,10 @@ public class MainController {
         }
 
         // Set a value on secondsToRedirect
-        if (interstitialURL == null) secondsToRedirect = null;
+        if (interstitialURL == null){
+            interstitialURL = "";
+            secondsToRedirect = 0;
+        }
         else if (secondsToRedirect == null) secondsToRedirect = 10;
 
         String sequence;

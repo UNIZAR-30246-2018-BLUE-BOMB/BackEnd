@@ -44,7 +44,8 @@ public class UserAgentDetection {
      */
     public static String detectOS(String userAgentString) {
         String operatingSystemName = UserAgent.parseUserAgentString(userAgentString).getOperatingSystem().getGroup().getName();
-        return supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
+        String toReturn = supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
+        return toReturn;
     }
 
     /**
@@ -77,6 +78,7 @@ public class UserAgentDetection {
      */
     public static String detectBrowser(String userAgentString) {
         String browserName = UserAgent.parseUserAgentString(userAgentString).getBrowser().getGroup().getName();
-        return supportedBrowsers.contains(browserName) ? browserName : "Other";
+        String toReturn =  supportedBrowsers.contains(browserName) ? browserName : "Other";
+        return toReturn;
     }
 }

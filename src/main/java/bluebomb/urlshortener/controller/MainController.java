@@ -4,7 +4,6 @@ import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.CacheApi;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.errors.SequenceNotFoundError;
-import bluebomb.urlshortener.errors.ServerInternalError;
 import bluebomb.urlshortener.exceptions.CacheInternalException;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.QrGeneratorBadParametersException;
@@ -58,7 +57,6 @@ public class MainController {
         String sequence;
         try {
             sequence = DatabaseApi.getInstance().createShortURL(headURL, interstitialURL, secondsToRedirect);
-            sequence = CommonValues.SHORTENED_URI_PREFIX + sequence;
         } catch (DatabaseInternalException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error when creating shortened URL");
         }
@@ -67,12 +65,7 @@ public class MainController {
 
         if (interstitialURL != null) AvailableURI.getInstance().registerURL(interstitialURL);
 
-        return new ShortResponse(CommonValues.SHORTENED_URI_PREFIX + sequence,
-                CommonValues.BACK_END_URI + sequence + "/qr",
-                CommonValues.BACK_END_URI + sequence + "/stats/{parameter}/daily",
-                "ws:" + CommonValues.BACK_END_URI + "ws/" + "ws/" + sequence + "/stats/{parameter}/global",
-                "ws:" + CommonValues.BACK_END_URI + "ws/" + "ws/" + sequence + "/info"
-        );
+        return new ShortResponse(sequence, interstitialURL == null);
     }
 
     /**

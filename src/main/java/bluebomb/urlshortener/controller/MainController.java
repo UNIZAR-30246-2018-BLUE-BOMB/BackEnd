@@ -118,6 +118,36 @@ public class MainController {
             backgroundColor = parseHexadecimalToInt(backgroundColorIm);
         }
 
+        // Check logo
+        if (logo != null && !logo.isEmpty() && !AvailableURI.getInstance().isURLAvailable(logo)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logo resource is not available");
+        }
+
+        // Check Size
+        if (size == null) {
+            size = new Size(500, 500);
+        }
+
+        // Check Error correction
+        ErrorCorrectionLevel errorCorrectionLevel;
+        switch (errorCorrection) {
+            case "L":
+                errorCorrectionLevel = ErrorCorrectionLevel.L;
+                break;
+            case "M":
+                errorCorrectionLevel = ErrorCorrectionLevel.M;
+                break;
+            case "Q":
+                errorCorrectionLevel = ErrorCorrectionLevel.Q;
+                break;
+            case "H":
+                errorCorrectionLevel = ErrorCorrectionLevel.H;
+                break;
+            default:
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error in error correction level");
+        }
+
+
         // Get QR if is in cache
         try {
             response = CacheApi.getInstance().getQR(sequence, size, errorCorrection, margin, qrColor, backgroundColor, logo, acceptHeader);
@@ -128,16 +158,6 @@ public class MainController {
         if (response != null) {
             // QR have been cached
             return response;
-        }
-
-        // Check logo
-        if (logo != null && !logo.isEmpty() && !AvailableURI.getInstance().isURLAvailable(logo)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logo resource is not available");
-        }
-
-        // Check Size
-        if (size == null) {
-            size = new Size(500, 500);
         }
 
         // Download logo
@@ -160,25 +180,6 @@ public class MainController {
             responseType = QRCodeGenerator.ResponseType.TYPE_JPEG;
         } else {
             responseType = QRCodeGenerator.ResponseType.TYPE_PNG;
-        }
-
-        // Error correction
-        ErrorCorrectionLevel errorCorrectionLevel;
-        switch (errorCorrection) {
-            case "L":
-                errorCorrectionLevel = ErrorCorrectionLevel.L;
-                break;
-            case "M":
-                errorCorrectionLevel = ErrorCorrectionLevel.M;
-                break;
-            case "Q":
-                errorCorrectionLevel = ErrorCorrectionLevel.Q;
-                break;
-            case "H":
-                errorCorrectionLevel = ErrorCorrectionLevel.H;
-                break;
-            default:
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error in error correction level");
         }
 
         try {

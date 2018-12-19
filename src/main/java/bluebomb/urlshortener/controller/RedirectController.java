@@ -8,6 +8,7 @@ import bluebomb.urlshortener.model.RedirectURL;
 import bluebomb.urlshortener.services.DownloadHTML;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,7 @@ public class RedirectController {
      *
      * @param sequence Shortened URL sequence code
      */
+    @CrossOrigin
     @RequestMapping(value = "{sequence}/ads", produces = MediaType.TEXT_HTML_VALUE)
     public String ads(@PathVariable(value = "sequence") String sequence) {
 

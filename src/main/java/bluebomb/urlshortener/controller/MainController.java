@@ -36,6 +36,7 @@ public class MainController {
      * @param secondsToRedirect Seconds to redirect to complete URL
      * @return Shortened URL and common related URLs
      */
+    @CrossOrigin
     @RequestMapping(value = "/short", method = POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ShortResponse getShortURI(@RequestParam(value = "headURL") String headURL,
                                      @RequestParam(value = "interstitialURL", required = false) String interstitialURL,
@@ -81,6 +82,7 @@ public class MainController {
      * @param acceptHeader      Accepted return types
      * @return Qr image
      */
+    @CrossOrigin
     @RequestMapping(value = "/{sequence}/qr", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public byte[] getQr(@PathVariable(value = "sequence") String sequence,
                         @RequestParam(value = "size", required = false) Size size,

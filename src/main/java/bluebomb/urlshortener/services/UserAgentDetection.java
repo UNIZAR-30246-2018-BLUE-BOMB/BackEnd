@@ -1,12 +1,9 @@
 package bluebomb.urlshortener.services;
 
 import bluebomb.urlshortener.model.StatsAgent;
-import eu.bitwalker.useragentutils.Browser;
-import eu.bitwalker.useragentutils.OperatingSystem;
 import eu.bitwalker.useragentutils.UserAgent;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +16,26 @@ public class UserAgentDetection {
     private UserAgentDetection() {
     }
 
+    private static Set<String> supportedOperatingSystems = new HashSet<>(Arrays.asList(
+            "Windows",
+            "Mac OS X",
+            "Linux",
+            "Chrome OS",
+            "Android",
+            "iOS",
+            "Symbian OS",
+            "Other"
+    ));
+
+    /**
+     * Get supported operating systems
+     *
+     * @return supported operating systems
+     */
+    public static List<StatsAgent> getSupportedOS() {
+        return Arrays.stream(supportedOperatingSystems.toArray()).map(op -> new StatsAgent((String) op)).collect(Collectors.toList());
+    }
+
     /**
      * Detect user agent OS
      *
@@ -26,8 +43,30 @@ public class UserAgentDetection {
      * @return OS relative to this user agent
      */
     public static String detectOS(String userAgentString) {
-        UserAgent userAgent = UserAgent.parseUserAgentString(userAgentString);
-        return userAgent.getOperatingSystem().getName();
+        String operatingSystemName = UserAgent.parseUserAgentString(userAgentString).getOperatingSystem().getGroup().getName();
+        return supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
+    }
+
+    /**
+     * Supported browsers
+     */
+    private static Set<String> supportedBrowsers = new HashSet<>(Arrays.asList(
+            "Chrome",
+            "Firefox",
+            "Internet Explorer",
+            "Microsoft Edge",
+            "Safari",
+            "Opera",
+            "Other"
+    ));
+
+    /**
+     * Get supported browsers
+     *
+     * @return supported browsers
+     */
+    public static List<StatsAgent> getSupportedBrowsers() {
+        return Arrays.stream(supportedBrowsers.toArray()).map(op -> new StatsAgent((String) op)).collect(Collectors.toList());
     }
 
     /**
@@ -37,25 +76,7 @@ public class UserAgentDetection {
      * @return OS relative to this user agent
      */
     public static String detectBrowser(String userAgentString) {
-        UserAgent userAgent = UserAgent.parseUserAgentString(userAgentString);
-        return userAgent.getBrowser().getName();
-    }
-
-    /**
-     * Get supported operating systems
-     *
-     * @return supported operating systems
-     */
-    public static List<StatsAgent> getSupportedOS() {
-        return Arrays.stream(OperatingSystem.values()).map(op -> new StatsAgent(op.getName())).collect(Collectors.toList());
-    }
-
-    /**
-     * Get supported browsers
-     *
-     * @return supported browsers
-     */
-    public static List<StatsAgent> getSupportedBrowsers() {
-        return Arrays.stream(Browser.values()).map(op -> new StatsAgent(op.getName())).collect(Collectors.toList());
+        String browserName = UserAgent.parseUserAgentString(userAgentString).getBrowser().getGroup().getName();
+        return supportedBrowsers.contains(browserName) ? browserName : "Other";
     }
 }

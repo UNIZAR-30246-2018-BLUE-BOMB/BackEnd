@@ -11,10 +11,7 @@ import bluebomb.urlshortener.services.UserAgentDetection;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
@@ -35,6 +32,7 @@ public class StatsController {
      * @param maxAmountOfDataToRetrieve Amount of data to get
      * @return the stats of the shortened URL associated with sequence
      */
+    @CrossOrigin
     @RequestMapping(value = "/{sequence}/stats/daily", produces = MediaType.APPLICATION_JSON_VALUE)
     public ArrayList<Stats> getStatsDaily(@PathVariable(value = "sequence") String sequence,
                                           @RequestParam(value = "parameter") String parameter,
@@ -68,6 +66,7 @@ public class StatsController {
      * @param element element to get all supported options
      * @return supported agents
      */
+    @CrossOrigin
     @RequestMapping(value = "/{element}/support", produces = MediaType.APPLICATION_JSON_VALUE)
     public ArrayList<StatsAgent> getSupportedAgents(@PathVariable(value = "element") String element) {
         ArrayList<StatsAgent> statsAgents;

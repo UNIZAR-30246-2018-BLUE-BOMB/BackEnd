@@ -29,8 +29,8 @@ public class ShortResponse {
 
     public ShortResponse(String sequence, boolean hadAds) {
         this.sequence = sequence;
-        this.shortedUrl = CommonValues.FRONT_END_REDIRECT_URI + sequence;
-        this.qrReferenceUrl = CommonValues.BACK_END_URI + sequence + "/qr";
+        this.shortedUrl = CommonValues.FRONT_END_REDIRECT_URI + "/"  + sequence;
+        this.qrReferenceUrl = CommonValues.BACK_END_URI + "/" + sequence + "/qr";
 
         this.infoUrlRequestChannel = CommonValues.BACK_END_WS_URI + "/app/info";
         this.infoUrlListenChannel = CommonValues.BACK_END_WS_URI + "/user/info/" + sequence;
@@ -48,7 +48,7 @@ public class ShortResponse {
         this.globalStatsOperatingSystemChangesListenChannel = CommonValues.BACK_END_WS_URI + "/topic/stats/global/os/" + sequence;
         this.globalStatsBrowserChangesListenChannel = CommonValues.BACK_END_WS_URI + "/topic/stats/global/browser/" + sequence;
 
-        this.adsUrl = hadAds ? CommonValues.BACK_END_URI + sequence + "/ads" : "";
+        this.adsUrl = hadAds ? CommonValues.BACK_END_URI + "/" + sequence + "/ads" : "";
     }
 
     public ShortResponse(String sequence, String shortedUrl, String qrReferenceUrl, String infoUrlRequestChannel,

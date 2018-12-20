@@ -53,7 +53,6 @@ public class MainController {
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null){
-            interstitialURL = "";
             secondsToRedirect = 0;
         }
         else if (secondsToRedirect == null) secondsToRedirect = 10;
@@ -90,7 +89,7 @@ public class MainController {
     public byte[] getQr(@PathVariable(value = "sequence") String sequence,
                         @RequestParam(value = "size", required = false) Size size,
                         @RequestParam(value = "errorCorrection", required = false, defaultValue = "L") String errorCorrection,
-                        @RequestParam(value = "margin", required = false, defaultValue = "20") Integer margin,
+                        @RequestParam(value = "margin", required = false, defaultValue = "3") Integer margin,
                         @RequestParam(value = "qrColor", required = false, defaultValue = "0xFF000000") String qrColorIm,
                         @RequestParam(value = "backgroundColor", required = false, defaultValue = "0xFFFFFFFF") String backgroundColorIm,
                         @RequestParam(value = "logo", required = false) String logo,

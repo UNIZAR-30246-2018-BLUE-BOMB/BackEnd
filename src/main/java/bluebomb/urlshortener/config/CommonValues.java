@@ -8,7 +8,7 @@ public class CommonValues {
     /**
      * Front end base URL
      */
-    public final static String FRONT_END_URI = "http://www.localhost:3000";
+    public final static String FRONT_END_URI = "http://www.localhost:4200";
 
     /**
      * Back end base URL
@@ -23,7 +23,7 @@ public class CommonValues {
     /**
      * Shortened uri prefix
      */
-    public final static String FRONT_END_REDIRECT_URI = "http://www.localhost:3000/redirect-page";
+    public final static String FRONT_END_REDIRECT_URI = "http://www.localhost:4200/redirect";
 
     /**
      * Available stats parameters

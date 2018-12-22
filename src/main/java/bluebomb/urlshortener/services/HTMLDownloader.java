@@ -3,19 +3,13 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-
-public class DownloadHTML {
-    private static DownloadHTML ourInstance = new DownloadHTML();
-
-    public static DownloadHTML getInstance() {
-        return ourInstance;
-    }
-
-    private DownloadHTML() {
-    }
+@Component
+public class HTMLDownloader {
 
     /**
      * Download the HTML that contains urlToDownload
@@ -24,12 +18,14 @@ public class DownloadHTML {
      * @return HTML that contains urlToDownload
      * @throws DownloadHTMLInternalException if something go wrong in download
      */
+    @Cacheable("htmlPagesCache")
     public String download(String urlToDownload) throws DownloadHTMLInternalException {
         try {
+            // TODO: Resolve relative path (Jsoup)
             Document doc = Jsoup.connect(urlToDownload).get();
             return doc.html();
         } catch (IOException e) {
-            throw new DownloadHTMLInternalException("Something go wrong");
+            throw new DownloadHTMLInternalException(e.getMessage());
         }
     }
 }

@@ -4,8 +4,8 @@ import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
 import bluebomb.urlshortener.model.*;
-import bluebomb.urlshortener.services.AvailableURI;
-import bluebomb.urlshortener.services.UserAgentDetection;
+import bluebomb.urlshortener.services.AvailableURIChecker;
+import bluebomb.urlshortener.services.UserAgentDetector;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +71,9 @@ public class InfoController {
                 headerAccessor.getMessageHeaders());
     }
 
+    @Autowired
+    UserAgentDetector userAgentDetector;
+
     /**
      * Redirection function to get original URL and statics
      *
@@ -93,15 +96,15 @@ public class InfoController {
             throw new ShortenedInfoException("Unavailable sequence: " + sequence, simpSessionId);
         }
 
-        if (!AvailableURI.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURI.getInstance()
+        if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURIChecker.getInstance()
                 .isSequenceAvailable(sequence)) {
             // Sequence non reachable
             throw new ShortenedInfoException("Sequence non reachable: " + sequence, simpSessionId);
         }
 
         // Update statics
-        String browser = UserAgentDetection.detectBrowser(userAgent);
-        String os = UserAgentDetection.detectOS(userAgent);
+        String browser = userAgentDetector.detectBrowser(userAgent);
+        String os = userAgentDetector.detectOS(userAgent);
         ImmutablePair<Integer, Integer> newStatics = DatabaseApi.getInstance().addStats(sequence, os, browser);
 
         // Notify new statics to all subscribers

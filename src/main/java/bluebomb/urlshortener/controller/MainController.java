@@ -1,28 +1,22 @@
 package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.config.CommonValues;
-import bluebomb.urlshortener.database.CacheApi;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.errors.SequenceNotFoundError;
-import bluebomb.urlshortener.exceptions.CacheInternalException;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.QrGeneratorBadParametersException;
 import bluebomb.urlshortener.exceptions.QrGeneratorInternalException;
 import bluebomb.urlshortener.model.ShortResponse;
 import bluebomb.urlshortener.model.Size;
 
-import bluebomb.urlshortener.qr.QRCodeGenerator;
-import bluebomb.urlshortener.services.AvailableURI;
+import bluebomb.urlshortener.services.QRCodeGenerator;
+import bluebomb.urlshortener.services.AvailableURIChecker;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -42,20 +36,19 @@ public class MainController {
                                      @RequestParam(value = "interstitialURL", required = false) String interstitialURL,
                                      @RequestParam(value = "secondsToRedirect", required = false) Integer secondsToRedirect) {
         // Original URL is not reachable
-        if (!AvailableURI.getInstance().isURLAvailable(headURL)) {
+        if (!AvailableURIChecker.getInstance().isURLAvailable(headURL)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
         }
 
         // Ad URL is not reachable
-        if (interstitialURL != null && !AvailableURI.getInstance().isURLAvailable(interstitialURL)) {
+        if (interstitialURL != null && !AvailableURIChecker.getInstance().isURLAvailable(interstitialURL)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ad URL is not reachable");
         }
 
         // Set a value on secondsToRedirect
-        if (interstitialURL == null){
+        if (interstitialURL == null) {
             secondsToRedirect = 0;
-        }
-        else if (secondsToRedirect == null) secondsToRedirect = 10;
+        } else if (secondsToRedirect == null) secondsToRedirect = 10;
 
         String sequence;
         try {
@@ -64,12 +57,18 @@ public class MainController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error when creating shortened URL");
         }
 
-        AvailableURI.getInstance().registerURL(headURL);
+        AvailableURIChecker.getInstance().registerURL(headURL);
 
-        if (interstitialURL != null) AvailableURI.getInstance().registerURL(interstitialURL);
+        if (interstitialURL != null) AvailableURIChecker.getInstance().registerURL(interstitialURL);
 
         return new ShortResponse(sequence, interstitialURL == null);
     }
+
+    /**
+     * QR code generator service
+     */
+    @Autowired
+    private QRCodeGenerator qrCodeGenerator;
 
     /**
      * Generates Qr for specific URL
@@ -94,16 +93,13 @@ public class MainController {
                         @RequestParam(value = "backgroundColor", required = false, defaultValue = "0xFFFFFFFF") String backgroundColorIm,
                         @RequestParam(value = "logo", required = false) String logo,
                         @RequestHeader("Accept") String acceptHeader) {
-        // Response
-        byte[] response = null;
-
         // Check sequence
         try {
             if (!DatabaseApi.getInstance().containsSequence(sequence)) {
                 throw new SequenceNotFoundError();
-            } else if (!AvailableURI.getInstance().isSequenceAvailable(sequence)) {
+            } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
-            } else if (!AvailableURI.getInstance().isSequenceAdsAvailable(sequence)) {
+            } else if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated ad is not available");
             }
         } catch (DatabaseInternalException e) {
@@ -123,7 +119,7 @@ public class MainController {
         }
 
         // Check logo
-        if (logo != null && !logo.isEmpty() && !AvailableURI.getInstance().isURLAvailable(logo)) {
+        if (logo != null && !logo.isEmpty() && !AvailableURIChecker.getInstance().isURLAvailable(logo)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logo resource is not available");
         }
 
@@ -151,32 +147,7 @@ public class MainController {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error in error correction level");
         }
 
-
-        // Get QR if is in cache
-        try {
-            response = CacheApi.getInstance().getQR(sequence, size, errorCorrection, margin, qrColor, backgroundColor, logo, acceptHeader);
-        } catch (CacheInternalException e) {
-            // Database not working
-        }
-
-        if (response != null) {
-            // QR have been cached
-            return response;
-        }
-
-        // Download logo
-        BufferedImage bufferedLogo = null;
-
-        if (logo != null && !logo.isEmpty()) {
-            try {
-                URL url = new URL(logo);
-                bufferedLogo = ImageIO.read(url);
-            } catch (IOException e) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logo resource is not available");
-            }
-        }
-
-        // Response type
+        // Check response type
         QRCodeGenerator.ResponseType responseType;
         if (acceptHeader.contains(MediaType.IMAGE_PNG_VALUE)) {
             responseType = QRCodeGenerator.ResponseType.TYPE_PNG;
@@ -186,22 +157,17 @@ public class MainController {
             responseType = QRCodeGenerator.ResponseType.TYPE_PNG;
         }
 
+        // Return generated QR
         try {
-            response = QRCodeGenerator.generate(CommonValues.FRONT_END_URI + sequence, responseType, size,
-                    errorCorrectionLevel, margin, qrColor, backgroundColor, bufferedLogo);
-            CacheApi.getInstance().addQR(sequence, size, errorCorrection, margin,
-                    qrColor, backgroundColor, logo, acceptHeader, response);
+            return qrCodeGenerator.generate(CommonValues.FRONT_END_REDIRECT_URI + "/" + sequence, responseType, size,
+                    errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
         } catch (QrGeneratorBadParametersException e) {
             // Bad parameters
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (QrGeneratorInternalException e) {
             // Something went wrong in QR generation
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong in QR generation");
-        } catch (CacheInternalException e) {
-            // Database cache not working
         }
-
-        return response;
     }
 
     /**

@@ -1,11 +1,10 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.database.CacheApi;
 import bluebomb.urlshortener.errors.ServerInternalError;
-import bluebomb.urlshortener.exceptions.CacheInternalException;
 import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
-import bluebomb.urlshortener.services.DownloadHTML;
+import bluebomb.urlshortener.services.HTMLDownloader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,10 +15,13 @@ import org.springframework.web.server.ResponseStatusException;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.errors.SequenceNotFoundError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.services.AvailableURI;
+import bluebomb.urlshortener.services.AvailableURIChecker;
 
 @RestController
 public class RedirectController {
+
+    @Autowired
+    HTMLDownloader htmlDownloader;
 
     /**
      * Generates ads for specific URL
@@ -54,40 +56,18 @@ public class RedirectController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sequence have no ads");
         }
 
-        if (!AvailableURI.getInstance().isSequenceAdsAvailable(sequence)) {
+        if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence)) {
             // Associated ads is not available
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated ads is not available");
         }
 
-        String htmlPage = null;
-
+        // Download the ad page
         try {
-            //Get the ads web page if it is in cache
-            htmlPage = CacheApi.getInstance().getAdHTML(adsURL.getInterstitialURL());
-        } catch (CacheInternalException e) {
-            // Something go wrong in cache
-        }
-
-        if (htmlPage != null) {
-            // Ad was in cache
-            return htmlPage;
-        }
-
-        // If html isn't in cache, download it
-        try {
-            htmlPage = DownloadHTML.getInstance().download(adsURL.getInterstitialURL());
+            return htmlDownloader.download(adsURL.getInterstitialURL());
         } catch (DownloadHTMLInternalException e) {
             // Something go wrong downloading HTML
             throw new ServerInternalError();
         }
 
-        // Save downloaded html in cache
-        try {
-            CacheApi.getInstance().addAdHTML(adsURL.getInterstitialURL(), htmlPage);
-        } catch (CacheInternalException e) {
-            // Something go wrong in cache
-        }
-
-        return htmlPage;
     }
 }

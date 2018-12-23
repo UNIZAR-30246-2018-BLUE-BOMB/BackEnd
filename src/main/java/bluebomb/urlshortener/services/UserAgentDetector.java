@@ -2,6 +2,8 @@ package bluebomb.urlshortener.services;
 
 import bluebomb.urlshortener.model.StatsAgent;
 import eu.bitwalker.useragentutils.UserAgent;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -9,14 +11,9 @@ import java.util.stream.Collectors;
 /**
  * Detect OS and Browser from an user agent
  */
-public class UserAgentDetection {
-    /**
-     * Only support static calls
-     */
-    private UserAgentDetection() {
-    }
-
-    private static Set<String> supportedOperatingSystems = new HashSet<>(Arrays.asList(
+@Component
+public class UserAgentDetector {
+    private Set<String> supportedOperatingSystems = new HashSet<>(Arrays.asList(
             "Windows",
             "Mac OS X",
             "Linux",
@@ -32,7 +29,7 @@ public class UserAgentDetection {
      *
      * @return supported operating systems
      */
-    public static List<StatsAgent> getSupportedOS() {
+    public List<StatsAgent> getSupportedOS() {
         return Arrays.stream(supportedOperatingSystems.toArray()).map(op -> new StatsAgent((String) op)).collect(Collectors.toList());
     }
 
@@ -42,16 +39,16 @@ public class UserAgentDetection {
      * @param userAgentString user agent obtained from the client
      * @return OS relative to this user agent
      */
-    public static String detectOS(String userAgentString) {
+    @Cacheable("osDetectorCache")
+    public String detectOS(String userAgentString) {
         String operatingSystemName = UserAgent.parseUserAgentString(userAgentString).getOperatingSystem().getGroup().getName();
-        String toReturn = supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
-        return toReturn;
+        return supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
     }
 
     /**
      * Supported browsers
      */
-    private static Set<String> supportedBrowsers = new HashSet<>(Arrays.asList(
+    private Set<String> supportedBrowsers = new HashSet<>(Arrays.asList(
             "Chrome",
             "Firefox",
             "Internet Explorer",
@@ -66,7 +63,7 @@ public class UserAgentDetection {
      *
      * @return supported browsers
      */
-    public static List<StatsAgent> getSupportedBrowsers() {
+    public List<StatsAgent> getSupportedBrowsers() {
         return Arrays.stream(supportedBrowsers.toArray()).map(op -> new StatsAgent((String) op)).collect(Collectors.toList());
     }
 
@@ -76,9 +73,9 @@ public class UserAgentDetection {
      * @param userAgentString user agent obtained from the client
      * @return OS relative to this user agent
      */
-    public static String detectBrowser(String userAgentString) {
+    @Cacheable("browserDetectorCache")
+    public String detectBrowser(String userAgentString) {
         String browserName = UserAgent.parseUserAgentString(userAgentString).getBrowser().getGroup().getName();
-        String toReturn =  supportedBrowsers.contains(browserName) ? browserName : "Other";
-        return toReturn;
+        return supportedBrowsers.contains(browserName) ? browserName : "Other";
     }
 }

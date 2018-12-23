@@ -93,7 +93,6 @@ public class StatsGlobalController {
      * Catch getGetGlobalStats produced Exceptions
      *
      * @param e exception captured
-     * @return error message
      */
     @SuppressWarnings("unused")
     @MessageExceptionHandler({StatsGlobalException.class, DatabaseInternalException.class})

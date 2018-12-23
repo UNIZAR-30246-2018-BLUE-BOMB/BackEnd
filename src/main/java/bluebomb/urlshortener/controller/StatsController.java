@@ -5,9 +5,10 @@ import bluebomb.urlshortener.errors.SequenceNotFoundError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
-import bluebomb.urlshortener.services.AvailableURI;
-import bluebomb.urlshortener.services.UserAgentDetection;
+import bluebomb.urlshortener.services.AvailableURIChecker;
+import bluebomb.urlshortener.services.UserAgentDetector;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,7 +45,7 @@ public class StatsController {
         try {
             if (!DatabaseApi.getInstance().containsSequence(sequence)) {
                 throw new SequenceNotFoundError();
-            } else if (!AvailableURI.getInstance().isSequenceAvailable(sequence)) {
+            } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
             }
         } catch (DatabaseInternalException e) {
@@ -60,6 +61,9 @@ public class StatsController {
         }
     }
 
+    @Autowired
+    UserAgentDetector userAgentDetector;
+
     /**
      * Get supported agents
      *
@@ -72,10 +76,10 @@ public class StatsController {
         ArrayList<StatsAgent> statsAgents;
         switch (element.toLowerCase()) {
             case "os":
-                statsAgents = new ArrayList<>(UserAgentDetection.getSupportedOS());
+                statsAgents = new ArrayList<>(userAgentDetector.getSupportedOS());
                 break;
             case "browser":
-                statsAgents = new ArrayList<>(UserAgentDetection.getSupportedBrowsers());
+                statsAgents = new ArrayList<>(userAgentDetector.getSupportedBrowsers());
                 break;
             default:
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The searched parameter is not available");

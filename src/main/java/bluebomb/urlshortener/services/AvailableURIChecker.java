@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Check if an URL or an sequence is reachable
  */
-public class AvailableURI {
+public class AvailableURIChecker {
     /**
      * Timeout when get petition is done in milliseconds
      */
@@ -37,21 +37,21 @@ public class AvailableURI {
     /**
      * Instance
      */
-    private static AvailableURI ourInstance = new AvailableURI();
+    private static AvailableURIChecker ourInstance = new AvailableURIChecker();
 
     /**
      * Get an instance of the class (Singleton pattern)
      *
      * @return the instance of the class
      */
-    public static AvailableURI getInstance() {
+    public static AvailableURIChecker getInstance() {
         return ourInstance;
     }
 
     /**
      * Init background thread
      */
-    private AvailableURI() {
+    private AvailableURIChecker() {
         availableURLCheckerThread = new Thread(this::checkIfURLSAreReachableLoop);
         availableURLCheckerThread.start();
 

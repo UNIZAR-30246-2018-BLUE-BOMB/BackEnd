@@ -1,6 +1,5 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.errors.SequenceNotFoundError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
@@ -13,6 +12,7 @@ import bluebomb.urlshortener.services.QRCodeGenerator;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +63,12 @@ public class MainController {
 
         return new ShortResponse(sequence, interstitialURL == null);
     }
+
+    /**
+     * Front end base redirect page uri
+     */
+    @Value("${app.front-end-redirect-uri:}")
+    private String frontEndRedirectURI;
 
     /**
      * QR code generator service
@@ -159,7 +165,7 @@ public class MainController {
 
         // Return generated QR
         try {
-            return qrCodeGenerator.generate(CommonValues.FRONT_END_REDIRECT_URI + "/" + sequence, responseType, size,
+            return qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
                     errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
         } catch (QrGeneratorBadParametersException e) {
             // Bad parameters

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,7 +18,6 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import bluebomb.urlshortener.config.CommonValues;
 
 import java.util.Map;
 
@@ -71,6 +71,15 @@ public class InfoController {
                 headerAccessor.getMessageHeaders());
     }
 
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
+
+    /**
+     * User agent detector service
+     */
     @Autowired
     UserAgentDetector userAgentDetector;
 
@@ -144,7 +153,7 @@ public class InfoController {
                         simpMessagingTemplate);
             }).start();
             sendShortenedInfoToSubscriber(simpSessionId,
-                    new ShortenedInfo(sequence, "", CommonValues.BACK_END_URI + sequence + "/ads", ad.getSecondsToRedirect()),
+                    new ShortenedInfo(sequence, "", backEndURI + sequence + "/ads", ad.getSecondsToRedirect()),
                     simpMessagingTemplate);
         }
     }

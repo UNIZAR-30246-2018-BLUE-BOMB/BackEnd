@@ -1,6 +1,5 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.ErrorMessageWS;
@@ -8,6 +7,7 @@ import bluebomb.urlshortener.model.ShortenedInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -40,6 +40,12 @@ public class InfoEndpointTest {
     private WebSocketStompClient stompClient;
 
     private final WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
+
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
 
     @Before
     public void setup() {
@@ -122,7 +128,7 @@ public class InfoEndpointTest {
                 assertEquals(2, messagesCaptured.size());
 
                 assertEquals("", messagesCaptured.get(0).getHeadURL());
-                assertEquals(CommonValues.BACK_END_URI + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
+                assertEquals(backEndURI + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
                 assertEquals(secondsToRedirect, messagesCaptured.get(0).getSecondsToRedirect());
 
                 assertEquals("", messagesCaptured.get(1).getInterstitialURL());

@@ -1,6 +1,5 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.StatsGlobalException;
@@ -77,7 +76,7 @@ public class StatsGlobalController {
                                       @DestinationVariable String parameter,
                                       @Header("simpSessionId") String simpSessionId)
             throws StatsGlobalException, DatabaseInternalException {
-        if (!CommonValues.AVAILABLE_STATS_PARAMETERS.contains(parameter)) {
+        if (!(parameter.equals("os") || parameter.equals("browser"))) {
             // Unavailable parameter
             throw new StatsGlobalException("Unavailable parameter: " + parameter, simpSessionId);
         }

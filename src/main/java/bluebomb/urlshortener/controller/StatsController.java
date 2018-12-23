@@ -61,6 +61,9 @@ public class StatsController {
         }
     }
 
+    /**
+     * User agent detector service
+     */
     @Autowired
     UserAgentDetector userAgentDetector;
 

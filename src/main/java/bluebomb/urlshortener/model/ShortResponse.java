@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.model;
 
-import bluebomb.urlshortener.config.CommonValues;
+import org.springframework.beans.factory.annotation.Value;
 
 public class ShortResponse {
     private String sequence;
@@ -24,31 +24,49 @@ public class ShortResponse {
 
     private String adsUrl;
 
+    /**
+     * Front end base redirect page uri
+     */
+    @Value("${app.front-end-redirect-uri:}")
+    private String frontEndRedirectURI;
+
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
+
+    /**
+     * Uri of websocket endpoint in the back end
+     */
+    @Value("${app.back-end-ws-uri:}")
+    private String backEndWsURI;
+
     public ShortResponse() {
     }
 
     public ShortResponse(String sequence, boolean hadAds) {
         this.sequence = sequence;
-        this.shortedUrl = CommonValues.FRONT_END_REDIRECT_URI + "/"  + sequence;
-        this.qrReferenceUrl = CommonValues.BACK_END_URI + "/" + sequence + "/qr";
+        this.shortedUrl = frontEndRedirectURI + "/" + sequence;
+        this.qrReferenceUrl = backEndURI + "/" + sequence + "/qr";
 
-        this.infoUrlRequestChannel = CommonValues.BACK_END_WS_URI + "/app/info";
-        this.infoUrlListenChannel = CommonValues.BACK_END_WS_URI + "/user/info/" + sequence;
-        this.infoUrlErrorChannel = CommonValues.BACK_END_WS_URI + "/user/queue/error/info";
+        this.infoUrlRequestChannel = backEndWsURI + "/app/info";
+        this.infoUrlListenChannel = backEndWsURI + "/user/info/" + sequence;
+        this.infoUrlErrorChannel = backEndWsURI + "/user/queue/error/info";
 
-        this.dailyStatsOperatingSystemUrl = CommonValues.BACK_END_URI + "/" + sequence + "/stats/os/daily";
-        this.dailyStatsBrowserUrl = CommonValues.BACK_END_URI + "/" + sequence + "/stats/browser/daily";
+        this.dailyStatsOperatingSystemUrl = backEndURI + "/" + sequence + "/stats/os/daily";
+        this.dailyStatsBrowserUrl = backEndURI + "/" + sequence + "/stats/browser/daily";
 
-        this.globalStatsRequestOperatingSystemChannel = CommonValues.BACK_END_WS_URI + "/app/stats/global/os";
-        this.globalStatsRequestBrowserChannel = CommonValues.BACK_END_WS_URI + "/app/stats/global/browser";
+        this.globalStatsRequestOperatingSystemChannel = backEndWsURI + "/app/stats/global/os";
+        this.globalStatsRequestBrowserChannel = backEndWsURI + "/app/stats/global/browser";
 
-        this.globalStatsListenChannel = CommonValues.BACK_END_WS_URI + "/user/stats/global";
-        this.globalStatsErrorChannel = CommonValues.BACK_END_WS_URI + "/user/queue/error/stats/global";
+        this.globalStatsListenChannel = backEndWsURI + "/user/stats/global";
+        this.globalStatsErrorChannel = backEndWsURI + "/user/queue/error/stats/global";
 
-        this.globalStatsOperatingSystemChangesListenChannel = CommonValues.BACK_END_WS_URI + "/topic/stats/global/os/" + sequence;
-        this.globalStatsBrowserChangesListenChannel = CommonValues.BACK_END_WS_URI + "/topic/stats/global/browser/" + sequence;
+        this.globalStatsOperatingSystemChangesListenChannel = backEndWsURI + "/topic/stats/global/os/" + sequence;
+        this.globalStatsBrowserChangesListenChannel = backEndWsURI + "/topic/stats/global/browser/" + sequence;
 
-        this.adsUrl = hadAds ? CommonValues.BACK_END_URI + "/" + sequence + "/ads" : "";
+        this.adsUrl = hadAds ? backEndURI + "/" + sequence + "/ads" : "";
     }
 
     public ShortResponse(String sequence, String shortedUrl, String qrReferenceUrl, String infoUrlRequestChannel,

@@ -31,6 +31,7 @@ repositories {
 dependencies {
     // Spring
     implementation('org.springframework.boot:spring-boot-starter')
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-websocket")
     
@@ -40,7 +41,7 @@ dependencies {
     // User agent detection
     compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'
 
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    // Usage of pair
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     
     // QR generator

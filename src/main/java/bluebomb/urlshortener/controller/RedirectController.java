@@ -20,6 +20,9 @@ import bluebomb.urlshortener.services.AvailableURIChecker;
 @RestController
 public class RedirectController {
 
+    /**
+     * HTML downloader service
+     */
     @Autowired
     HTMLDownloader htmlDownloader;
 

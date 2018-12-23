@@ -2,6 +2,9 @@ package bluebomb.urlshortener.model;
 
 import java.util.ArrayList;
 
+/**
+ * Global stats used in realtime stats in WebSockets
+ */
 public class GlobalStats {
     private String sequence;
     private String parameter;

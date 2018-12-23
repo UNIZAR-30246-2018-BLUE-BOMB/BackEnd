@@ -1,6 +1,12 @@
 package bluebomb.urlshortener.model;
 
+/**
+ * Common error message for WebSockets endpoints
+ */
 public class ErrorMessageWS {
+    /**
+     * Error message
+     */
     private String error;
 
     @SuppressWarnings("unused")

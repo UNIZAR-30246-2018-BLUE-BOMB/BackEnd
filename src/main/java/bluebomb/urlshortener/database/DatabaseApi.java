@@ -60,7 +60,7 @@ public class DatabaseApi {
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect)
             throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
             String query = "SELECT * FROM new_shortened_url(?,?,?) AS seq";
@@ -90,7 +90,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -101,7 +102,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
             String query = "SELECT * FROM short_sequences WHERE seq = ?";
@@ -120,7 +121,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return true;
     }
 
     /**
@@ -134,7 +136,7 @@ public class DatabaseApi {
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)
             throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
             String query = "SELECT * FROM insert_stat(?,?,?)";
@@ -166,7 +168,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -176,7 +179,7 @@ public class DatabaseApi {
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
             String query = "SELECT * FROM get_ad(?)";
@@ -198,7 +201,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -209,7 +213,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String getHeadURL(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
             String query = "SELECT * FROM get_head_url(?) AS url";
@@ -231,7 +235,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -244,7 +249,7 @@ public class DatabaseApi {
      */
     public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         ArrayList<ClickStat> retVal = new ArrayList<ClickStat>();
         String query = "";
         switch (parameter.toLowerCase()) {
@@ -280,7 +285,8 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 
     /**
@@ -297,7 +303,7 @@ public class DatabaseApi {
      */ 
     public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
-        Connection connection = null;
+        /*Connection connection = null;
         ArrayList<Stats> retVal = new ArrayList<Stats>();
         String query = "";
         switch(parameter.toLowerCase()){
@@ -351,6 +357,7 @@ public class DatabaseApi {
             } catch (SQLException e) {
                 throw new DatabaseInternalException("Cannot close connection");
             }
-        }
+        }*/
+        return null;
     }
 }

@@ -33,8 +33,10 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter')
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile('org.springframework.boot:spring-boot-starter-jdbc')
     
     // Database
+    compile('com.h2database:h2')
     compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
 
     // User agent detection

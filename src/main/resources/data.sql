@@ -1,5 +1,5 @@
-insert into short_url(url) values ('https://www.google.es/');
-insert into short_url(url, redirect, time) values ('https://www.google.es/', 'http://www.h2database.com/html/datatypes.html?highlight=datetime&search=date#firstFound', 10);
+insert into short_url(sequence, url, redirect, time) values ('0', 'https://www.google.es/', 'empty', -1);
+insert into short_url(sequence, url, redirect, time) values ('1', 'https://www.google.es/', 'http://www.h2database.com/html/datatypes.html?highlight=datetime&search=date#firstFound', 10);
 
 INSERT INTO os_stat (seq, date, os, clicks) VALUES (1, '2018-11-13', 'windows', 10);
 INSERT INTO os_stat (seq, date, os, clicks) VALUES (1, '2018-11-13', 'ubuntu', 50);

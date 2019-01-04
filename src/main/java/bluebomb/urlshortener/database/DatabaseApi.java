@@ -20,6 +20,51 @@ public class DatabaseApi {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    private String toSequence(int input) {
+        int aux_value;
+        String sequence = "";
+        while(input > 0) {
+            aux_value = 87 + (input - 1) % 36;
+            switch(aux_value) {
+                case 87:
+                    sequence = "0" + sequence;
+                    break;
+                case 88:
+                    sequence = "1" + sequence;
+                    break;
+                case 89:
+                    sequence = "2" + sequence;
+                    break;
+                case 90:
+                    sequence = "3" + sequence;
+                    break;
+                case 91:
+                    sequence = "4" + sequence;
+                    break;
+                case 92:
+                    sequence = "5" + sequence;
+                    break;
+                case 93:
+                    sequence = "6" + sequence;
+                    break;
+                case 94:
+                    sequence = "7" + sequence;
+                    break;
+                case 95:
+                    sequence = "8" + sequence;
+                    break;
+                case 96:
+                    sequence = "9" + sequence;
+                    break;
+                default:
+                    sequence = (char) aux_value + sequence;
+                    break;
+            }
+            input = input / 62;
+        }
+        return sequence;
+    }
     
     /**
      * Create a new Direct shortened URL without interstitialURL
@@ -29,7 +74,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL) throws DatabaseInternalException {
-        return createShortURL(headURL, "empty", 10);
+        return createShortURL(headURL, "empty", -1);
     }
 
     /**
@@ -41,7 +86,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, 10);
+        return createShortURL(headURL, interstitialURL, -1);
     }
 
     /**
@@ -55,38 +100,22 @@ public class DatabaseApi {
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect)
             throws DatabaseInternalException {
-        /*Connection connection = null;
+        String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
         try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM new_shortened_url(?,?,?) AS seq";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, headURL);
-            ps.setString(2, interstitialURL);
-            ps.setInt(3, secondsToRedirect);
-            ResultSet rs = ps.executeQuery(); //Execute query
-            if (rs.first()) {
-                return rs.getString("seq");
-            }
-            return null;
-            //throw new SQLException();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-                throw new DatabaseInternalException("createShortUrl failed, rolling back");
-            } catch (SQLException e1) {
-                throw new DatabaseInternalException("createShortUrl failed, cannot roll back");
-            }
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
+            return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
+        } catch (EmptyResultDataAccessException e){
+            query = "insert into short_url(url, redirect, time) values (?, ?, ?)";
+            jdbcTemplate.update(query, new Object[]{headURL, interstitialURL, secondsToRedirect});
+
+            query = "SELECT id FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
+            int id = jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, Integer.class);
+
+            query = "UPDATE short_url set sequence = ? WHERE id = ?";
+            String sequence = toSequence(id);
+            jdbcTemplate.update(query, new Object[]{sequence, id});
+            return sequence;
+        } 
+
     }
 
     /**
@@ -97,9 +126,9 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
-        String query = "SELECT id FROM short_url WHERE id = ?";
+        String query = "SELECT id FROM short_url WHERE sequence = ?";
         try {
-            jdbcTemplate.queryForObject(query, new Object[]{Integer.parseInt(sequence)}, Integer.class);
+            jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
             return true;
         } catch (EmptyResultDataAccessException e){
             return false;

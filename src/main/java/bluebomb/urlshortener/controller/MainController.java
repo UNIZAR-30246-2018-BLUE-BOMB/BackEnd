@@ -28,7 +28,7 @@ public class MainController {
 
     @GetMapping(value = "/test")
     public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
-        return databaseApi.containsSequence(t) + "";
+        return databaseApi.createShortURL(t);
     }
 
     /**

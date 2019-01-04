@@ -1,6 +1,7 @@
 create table short_url
 (
    id integer auto_increment,
+   sequence varchar(255),
    url varchar(1024) not null,
    redirect varchar(1024),
    time integer,

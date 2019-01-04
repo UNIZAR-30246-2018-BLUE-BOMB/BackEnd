@@ -8,6 +8,7 @@ import bluebomb.urlshortener.model.ShortenedInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -37,6 +38,9 @@ public class InfoEndpointTest {
     @LocalServerPort
     private int port;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     private WebSocketStompClient stompClient;
 
     private final WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
@@ -58,7 +62,7 @@ public class InfoEndpointTest {
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
-            shortenedSequence = DatabaseApi.getInstance().createShortURL(headURL);
+            shortenedSequence = databaseApi.createShortURL(headURL);
         } catch (DatabaseInternalException e) {
             System.out.println(e.getMessage());
             assert false;
@@ -94,7 +98,7 @@ public class InfoEndpointTest {
 
         try {
             // Create shortened URL if not exist
-            shortenedSequence = DatabaseApi.getInstance().createShortURL("http://www.google.de", "http://www.unizar.es", secondsToRedirect);
+            shortenedSequence = databaseApi.createShortURL("http://www.google.de", "http://www.unizar.es", secondsToRedirect);
         } catch (DatabaseInternalException e) {
             System.out.println(e.getMessage());
             assert false;

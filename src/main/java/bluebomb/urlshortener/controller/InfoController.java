@@ -29,6 +29,9 @@ public class InfoController {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     /**
      * Send original url to subscriber
      *
@@ -91,7 +94,7 @@ public class InfoController {
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
 
-        if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+        if (!databaseApi.containsSequence(sequence)) {
             // Unavailable sequence
             throw new ShortenedInfoException("Unavailable sequence: " + sequence, simpSessionId);
         }
@@ -105,7 +108,7 @@ public class InfoController {
         // Update statics
         String browser = userAgentDetector.detectBrowser(userAgent);
         String os = userAgentDetector.detectOS(userAgent);
-        ImmutablePair<Integer, Integer> newStatics = DatabaseApi.getInstance().addStats(sequence, os, browser);
+        ImmutablePair<Integer, Integer> newStatics = databaseApi.addStats(sequence, os, browser);
 
         // Notify new statics to all subscribers
         ClickStat clickStatOS = new ClickStat(os, newStatics.getRight());
@@ -125,8 +128,8 @@ public class InfoController {
         );
 
         // If adds send ad and start thread and if not return url
-        RedirectURL ad = DatabaseApi.getInstance().getAd(sequence);
-        String originalURL = DatabaseApi.getInstance().getHeadURL(sequence);
+        RedirectURL ad = databaseApi.getAd(sequence);
+        String originalURL = databaseApi.getHeadURL(sequence);
         if (ad == null) {
             sendShortenedInfoToSubscriber(simpSessionId,
                     new ShortenedInfo(sequence, originalURL, "", 0),

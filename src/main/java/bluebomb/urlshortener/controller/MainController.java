@@ -56,12 +56,13 @@ public class MainController {
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null) {
-            secondsToRedirect = 0;
+            interstitialURL = "empty";
+            secondsToRedirect = -1;
         } else if (secondsToRedirect == null) secondsToRedirect = 10;
 
         String sequence;
         try {
-            sequence = DatabaseApi.getInstance().createShortURL(headURL, interstitialURL, secondsToRedirect);
+            sequence = databaseApi.createShortURL(headURL, interstitialURL, secondsToRedirect);
         } catch (DatabaseInternalException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error when creating shortened URL");
         }
@@ -104,7 +105,7 @@ public class MainController {
                         @RequestHeader("Accept") String acceptHeader) {
         // Check sequence
         try {
-            if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new SequenceNotFoundError();
             } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");

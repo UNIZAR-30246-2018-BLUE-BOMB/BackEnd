@@ -27,6 +27,9 @@ public class StatsGlobalController {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
 
     /**
      * Send stats to all globalStats subscribers for some sequence and parameter
@@ -82,11 +85,11 @@ public class StatsGlobalController {
             throw new StatsGlobalException("Unavailable parameter: " + parameter, simpSessionId);
         }
 
-        if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+        if (!databaseApi.containsSequence(sequence)) {
             // Unavailable sequence
             throw new StatsGlobalException("Unavailable sequence: " + sequence, simpSessionId);
         }
-        return new GlobalStats(sequence, parameter, DatabaseApi.getInstance().getGlobalStats(sequence, parameter));
+        return new GlobalStats(sequence, parameter, databaseApi.getGlobalStats(sequence, parameter));
     }
 
     /**

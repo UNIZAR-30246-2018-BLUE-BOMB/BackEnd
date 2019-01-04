@@ -3,6 +3,8 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 
 import java.net.HttpURLConnection;
@@ -38,6 +40,9 @@ public class AvailableURIChecker {
      * Instance
      */
     private static AvailableURIChecker ourInstance = new AvailableURIChecker();
+
+    @Autowired
+	DatabaseApi databaseApi;
 
     /**
      * Get an instance of the class (Singleton pattern)
@@ -84,7 +89,7 @@ public class AvailableURIChecker {
         // This function will not perform the GET petition, this will be done by an external periodic process, this one
         // will check the available sequence tables created by this process
         try {
-            String url = DatabaseApi.getInstance().getHeadURL(sequence);
+            String url = databaseApi.getHeadURL(sequence);
             if (url != null) {
                 boolean isAvailable = isURLAvailable(url);
                 if (!urlReachedMap.containsKey(url)) {
@@ -111,7 +116,7 @@ public class AvailableURIChecker {
         // will check the available sequence tables created by this process
         // It will only be checked if not be in the table yet
         try {
-            RedirectURL adURL = DatabaseApi.getInstance().getAd(sequence);
+            RedirectURL adURL = databaseApi.getAd(sequence);
             if (adURL != null) {
                 boolean isAvailable = isURLAvailable(adURL.getInterstitialURL());
                 if (!urlReachedMap.containsKey(adURL.getInterstitialURL())) {

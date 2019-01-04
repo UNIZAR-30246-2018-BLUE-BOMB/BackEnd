@@ -23,6 +23,9 @@ public class RedirectController {
     @Autowired
     HTMLDownloader htmlDownloader;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     /**
      * Generates ads for specific URL
      *
@@ -34,7 +37,7 @@ public class RedirectController {
 
         try {
             // Check sequence exist
-            if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new SequenceNotFoundError();
             }
         } catch (DatabaseInternalException e) {
@@ -45,7 +48,7 @@ public class RedirectController {
         RedirectURL adsURL;
         // Get ads url if is in DB
         try {
-            adsURL = DatabaseApi.getInstance().getAd(sequence);
+            adsURL = databaseApi.getAd(sequence);
         } catch (DatabaseInternalException e) {
             // Something go wrong in db
             throw new ServerInternalError();

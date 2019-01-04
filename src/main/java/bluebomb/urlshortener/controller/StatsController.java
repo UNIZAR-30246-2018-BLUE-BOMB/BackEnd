@@ -22,6 +22,9 @@ import java.util.Date;
 @RestController
 public class StatsController {
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     /**
      * Gets the stats of the shortened URL
      *
@@ -43,7 +46,7 @@ public class StatsController {
                                           @RequestParam(value = "maxAmountOfDataToRetrieve") Integer maxAmountOfDataToRetrieve) {
         // Check sequence
         try {
-            if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new SequenceNotFoundError();
             } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
@@ -54,7 +57,7 @@ public class StatsController {
 
         // Get STATS
         try {
-            return DatabaseApi.getInstance().getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
+            return databaseApi.getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
 
         } catch (DatabaseInternalException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when trying obtain Stats from DB");

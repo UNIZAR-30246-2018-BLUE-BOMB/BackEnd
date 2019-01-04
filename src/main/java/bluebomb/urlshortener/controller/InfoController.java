@@ -1,6 +1,7 @@
 package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
 import bluebomb.urlshortener.model.*;
@@ -67,7 +68,7 @@ public class InfoController {
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
                 "/queue/error/info",
-                new ErrorMessageWS(error),
+                new WSApiError(error),
                 headerAccessor.getMessageHeaders());
     }
 
@@ -82,6 +83,12 @@ public class InfoController {
      */
     @Autowired
     UserAgentDetector userAgentDetector;
+
+    /**
+     * Uri checker service
+     */
+    @Autowired
+    AvailableURIChecker availableURIChecker;
 
     /**
      * Redirection function to get original URL and statics
@@ -105,8 +112,7 @@ public class InfoController {
             throw new ShortenedInfoException("Unavailable sequence: " + sequence, simpSessionId);
         }
 
-        if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURIChecker.getInstance()
-                .isSequenceAvailable(sequence)) {
+        if (!availableURIChecker.isSequenceAdsAvailable(sequence) || !availableURIChecker.isSequenceAvailable(sequence)) {
             // Sequence non reachable
             throw new ShortenedInfoException("Sequence non reachable: " + sequence, simpSessionId);
         }

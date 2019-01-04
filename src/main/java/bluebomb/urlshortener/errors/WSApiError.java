@@ -1,20 +1,20 @@
-package bluebomb.urlshortener.model;
+package bluebomb.urlshortener.errors;
 
 /**
  * Common error message for WebSockets endpoints
  */
-public class ErrorMessageWS {
+public class WSApiError {
     /**
      * Error message
      */
     private String error;
 
     @SuppressWarnings("unused")
-    public ErrorMessageWS() {
+    public WSApiError() {
     }
 
     @SuppressWarnings("unused")
-    public ErrorMessageWS(String error) {
+    public WSApiError(String error) {
         this.error = error;
     }
 

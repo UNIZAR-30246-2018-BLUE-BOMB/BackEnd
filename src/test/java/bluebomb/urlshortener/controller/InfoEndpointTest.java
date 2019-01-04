@@ -2,7 +2,7 @@ package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.model.ErrorMessageWS;
+import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.model.ShortenedInfo;
 import org.junit.Before;
 import org.junit.Test;
@@ -257,12 +257,12 @@ public class InfoEndpointTest {
 
         @Override
         public Type getPayloadType(StompHeaders headers) {
-            return ErrorMessageWS.class;
+            return WSApiError.class;
         }
 
         @Override
         public void handleFrame(StompHeaders headers, Object payload) {
-            this.failure.set(new Throwable(((ErrorMessageWS) payload).getError()));
+            this.failure.set(new Throwable(((WSApiError) payload).getError()));
             while (latch.getCount() > 0)
                 latch.countDown();
         }

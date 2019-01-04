@@ -34,6 +34,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-configuration-processor'
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf")
     
     // Database
     compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'

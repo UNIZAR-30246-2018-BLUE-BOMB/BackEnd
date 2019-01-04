@@ -1,31 +1,26 @@
 package bluebomb.urlshortener.database;
 
-import bluebomb.urlshortener.config.DbManager;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.RedirectURL;
 
 import bluebomb.urlshortener.model.Stats;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import javax.validation.constraints.NotNull;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
+@Repository
 public class DatabaseApi {
-    private static DatabaseApi ourInstance = new DatabaseApi();
 
-    public static DatabaseApi getInstance() {
-        return ourInstance;
-    }
-
-    private DatabaseApi() {
-    }
-
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+    
     /**
      * Create a new Direct shortened URL without interstitialURL
      *
@@ -102,27 +97,13 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
-        /*Connection connection = null;
+        String query = "SELECT id FROM short_url WHERE id = ?";
         try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM short_sequences WHERE seq = ?";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence); //replace seq = ? -> seq = sequence
-            ResultSet rs = ps.executeQuery(); //Execute query
-            return rs.first(); //Return if result is not empty
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("containsSequence failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return true;
+            jdbcTemplate.queryForObject(query, new Object[]{Integer.parseInt(sequence)}, Integer.class);
+            return true;
+        } catch (EmptyResultDataAccessException e){
+            return false;
+        }
     }
 
     /**

@@ -22,6 +22,15 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 public class MainController {
+
+    @Autowired
+	DatabaseApi databaseApi;
+
+    @GetMapping(value = "/test")
+    public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
+        return databaseApi.containsSequence(t) + "";
+    }
+
     /**
      * Create new shortened URL
      *

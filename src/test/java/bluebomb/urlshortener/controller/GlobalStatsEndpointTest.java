@@ -172,7 +172,7 @@ public class GlobalStatsEndpointTest {
     }
 
     @Test
-    public void serverProduceError() throws Exception {
+    public void serverProduceErrorSequence() throws Exception {
         final AtomicReference<Throwable> failure = new AtomicReference<>();
 
         final CountDownLatch messagesToReceive = new CountDownLatch(1);
@@ -200,7 +200,47 @@ public class GlobalStatsEndpointTest {
         } else {
             fail("Response error not received");
         }
+    }
 
+    @Test
+    public void serverProduceErrorParameter() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(1);
+
+        final String sequence = shortenedSequence;
+        final String parameter = "parameterquenoexiste";
+
+        StompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,  messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+
+                // Update topic stats
+                session.send("/app/stats/global/" + parameter, sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                assert failure.get().getMessage().equals("Unavailable parameter: " + parameter);
+            } else
+                fail("Errors not working");
+        } else {
+            fail("Response error not received");
+        }
     }
 
     private class GlobalStatsEndpointStompSessionHandler extends StompSessionHandlerAdapter {

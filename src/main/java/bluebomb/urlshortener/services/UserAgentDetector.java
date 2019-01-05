@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Detect OS and Browser from an user agent
+ * Detect OS and browser from an user agent
  */
 @Component
 public class UserAgentDetector {

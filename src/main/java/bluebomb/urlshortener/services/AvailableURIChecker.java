@@ -3,9 +3,12 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -15,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Check if an URL or an sequence is reachable
  */
+@Component
 public class AvailableURIChecker {
     /**
      * Timeout when get petition is done in milliseconds
@@ -30,37 +34,19 @@ public class AvailableURIChecker {
      * Reached URLs list
      */
     private ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
+  
 
     /**
-     * Thread that check if all URLs are reachable
-     */
-    private Thread availableURLCheckerThread;
-
-    /**
-     * Instance
-     */
-    private static AvailableURIChecker ourInstance = new AvailableURIChecker();
-
-    @Autowired
-	DatabaseApi databaseApi;
-
-    /**
-     * Get an instance of the class (Singleton pattern)
      *
-     * @return the instance of the class
+     * Get it high to avoid too much cpu consumption in this process
+     * The probability of a fall of the site in the last 10 seconds is low
      */
-    public static AvailableURIChecker getInstance() {
-        return ourInstance;
-    }
+    private static final int TIME_BETWEEN_URL_AVAILABLE_CHECK = 10000;
 
     /**
-     * Init background thread
+     * Reached URLs list
      */
-    private AvailableURIChecker() {
-        availableURLCheckerThread = new Thread(this::checkIfURLSAreReachableLoop);
-        availableURLCheckerThread.start();
-
-    }
+    private static ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
 
     /**
      * Return true if URL is an available URL (get response status = 200)
@@ -143,23 +129,20 @@ public class AvailableURIChecker {
     }
 
     /**
+     * Number of threads to execute available check
+     */
+    @Value("${app.available-uri-checker-threads:}")
+    private long availableUriCheckerThreads;
+
+    /**
      * Check if URLs are reachable in infinite loop
      */
-    private void checkIfURLSAreReachableLoop() {
-        while (true) {
-            // Update list response status
-            urlReachedMap.forEach((url, state) ->
-                    state.set(getURLResponseStatusFromGet(url) == 200)
-            );
-
-            try {
-                // Avoid too much cpu consumption in this process
-                // The probability of a fall of the site in the last 5 seconds is low
-                Thread.sleep(TIME_BETWEEN_URL_AVAILABLE_CHECK);
-            } catch (InterruptedException e) {
-                // Process cannot sleep
-            }
-        }
+    @Scheduled(fixedRate = TIME_BETWEEN_URL_AVAILABLE_CHECK)
+    public void checkIfURLSAreReachableLoop() {
+        // Update list response status
+        urlReachedMap.forEach(availableUriCheckerThreads, (url, state) ->
+                state.set(getURLResponseStatusFromGet(url) == 200)
+        );
     }
 
     /**

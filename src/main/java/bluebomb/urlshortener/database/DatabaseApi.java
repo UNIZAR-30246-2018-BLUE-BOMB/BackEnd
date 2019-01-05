@@ -167,7 +167,7 @@ public class DatabaseApi {
      * @param sequence sequence
      * @param os       operating system
      * @param browser  browser
-     * @return (New OS number of clicks, New Browser number of clicks) or null if sequence non exist
+     * @return (New operating system number of clicks, New browser number of clicks) or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)

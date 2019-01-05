@@ -1,7 +1,6 @@
 package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.DatabaseApi;
-import bluebomb.urlshortener.errors.SequenceNotFoundError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
@@ -21,6 +20,11 @@ import java.util.Date;
 
 @RestController
 public class StatsController {
+    /**
+     * Uri checker service
+     */
+    @Autowired
+    AvailableURIChecker availableURIChecker;
 
     @Autowired
 	DatabaseApi databaseApi;
@@ -46,9 +50,10 @@ public class StatsController {
                                           @RequestParam(value = "maxAmountOfDataToRetrieve") Integer maxAmountOfDataToRetrieve) {
         // Check sequence
         try {
-            if (!databaseApi.containsSequence(sequence)) {
-                throw new SequenceNotFoundError();
-            } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
+            if ((!databaseApi.containsSequence(sequence)) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Original URL is not available");
+            } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
+
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
             }
         } catch (DatabaseInternalException e) {
@@ -64,6 +69,9 @@ public class StatsController {
         }
     }
 
+    /**
+     * User agent detector service
+     */
     @Autowired
     UserAgentDetector userAgentDetector;
 
@@ -86,7 +94,6 @@ public class StatsController {
                 break;
             default:
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The searched parameter is not available");
-
         }
         return statsAgents;
     }

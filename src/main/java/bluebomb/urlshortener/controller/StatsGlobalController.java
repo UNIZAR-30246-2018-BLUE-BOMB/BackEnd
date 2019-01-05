@@ -1,10 +1,9 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.StatsGlobalException;
-import bluebomb.urlshortener.model.ErrorMessageWS;
+import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.model.GlobalStats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ public class StatsGlobalController {
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
                 "/queue/error/stats/global",
-                new ErrorMessageWS(error),
+                new WSApiError(error),
                 headerAccessor.getMessageHeaders());
     }
 
@@ -80,7 +79,7 @@ public class StatsGlobalController {
                                       @DestinationVariable String parameter,
                                       @Header("simpSessionId") String simpSessionId)
             throws StatsGlobalException, DatabaseInternalException {
-        if (!CommonValues.AVAILABLE_STATS_PARAMETERS.contains(parameter)) {
+        if (!(parameter.equals("os") || parameter.equals("browser"))) {
             // Unavailable parameter
             throw new StatsGlobalException("Unavailable parameter: " + parameter, simpSessionId);
         }

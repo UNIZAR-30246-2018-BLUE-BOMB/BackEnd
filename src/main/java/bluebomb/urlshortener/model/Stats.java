@@ -7,7 +7,6 @@ import java.util.Date;
 /**
  * Stats
  */
-
 public class Stats {
     private Date day;
     private ArrayList<ClickStat> clickStat;

@@ -3,7 +3,9 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -25,6 +27,16 @@ public class AvailableURIChecker {
 
     /**
      * Time between url available check in milliseconds
+     */
+    private static final int TIME_BETWEEN_URL_AVAILABLE_CHECK = 1000;
+
+    /**
+     * Reached URLs list
+     */
+    private ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
+  
+
+    /**
      *
      * Get it high to avoid too much cpu consumption in this process
      * The probability of a fall of the site in the last 10 seconds is low
@@ -63,7 +75,7 @@ public class AvailableURIChecker {
         // This function will not perform the GET petition, this will be done by an external periodic process, this one
         // will check the available sequence tables created by this process
         try {
-            String url = DatabaseApi.getInstance().getHeadURL(sequence);
+            String url = databaseApi.getHeadURL(sequence);
             if (url != null) {
                 boolean isAvailable = isURLAvailable(url);
                 if (!urlReachedMap.containsKey(url)) {
@@ -90,7 +102,7 @@ public class AvailableURIChecker {
         // will check the available sequence tables created by this process
         // It will only be checked if not be in the table yet
         try {
-            RedirectURL adURL = DatabaseApi.getInstance().getAd(sequence);
+            RedirectURL adURL = databaseApi.getAd(sequence);
             if (adURL != null) {
                 boolean isAvailable = isURLAvailable(adURL.getInterstitialURL());
                 if (!urlReachedMap.containsKey(adURL.getInterstitialURL())) {

@@ -27,5 +27,13 @@ public class ClickStat {
     public void setClicks(Integer clicks) {
         this.clicks = clicks;
     }
+
+    @Override
+    public String toString() {
+        return "ClickStat{" +
+                "agent='" + agent + '\'' +
+                ", clicks=" + clicks +
+                '}';
+    }
 }
 

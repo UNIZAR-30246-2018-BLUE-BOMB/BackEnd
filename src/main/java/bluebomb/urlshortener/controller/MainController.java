@@ -19,8 +19,20 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.util.Date;
+
 @RestController
 public class MainController {
+
+    @Autowired
+	DatabaseApi databaseApi;
+
+    /*@GetMapping(value = "/test")
+    public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
+        String retVal = databaseApi.getDailyStats(t, "os", new Date(1545658670776L), new Date(1546697899704L), "desc", 2) + "";
+        return retVal;
+    }*/
+
     /**
      * Uri checker service
      */
@@ -52,12 +64,13 @@ public class MainController {
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null) {
-            secondsToRedirect = 0;
+            interstitialURL = "empty";
+            secondsToRedirect = -1;
         } else if (secondsToRedirect == null) secondsToRedirect = 10;
 
         String sequence;
         try {
-            sequence = DatabaseApi.getInstance().createShortURL(headURL, interstitialURL, secondsToRedirect);
+            sequence = databaseApi.createShortURL(headURL, interstitialURL, secondsToRedirect);
         } catch (DatabaseInternalException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error when creating shortened URL");
         }
@@ -106,7 +119,7 @@ public class MainController {
                         @RequestHeader("Accept") String acceptHeader) {
         // Check sequence
         try {
-            if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
             } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");

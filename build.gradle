@@ -34,10 +34,13 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-configuration-processor'
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile('org.springframework.boot:spring-boot-starter-jdbc')
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
+
     
     // Database
-    compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
+    compile('com.h2database:h2')
+    // compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
 
     // User agent detection
     compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'

@@ -7,6 +7,7 @@ import bluebomb.urlshortener.model.GlobalStats;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -36,6 +37,9 @@ public class GlobalStatsEndpointTest {
     @LocalServerPort
     private int port;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     private WebSocketStompClient stompClient;
 
     private final WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
@@ -57,7 +61,7 @@ public class GlobalStatsEndpointTest {
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
-            shortenedSequence = DatabaseApi.getInstance().createShortURL(headURL);
+            shortenedSequence = databaseApi.createShortURL(headURL);
         } catch (DatabaseInternalException e) {
             System.out.println(e.getMessage());
             assert false;
@@ -115,7 +119,7 @@ public class GlobalStatsEndpointTest {
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
-            shortenedSequence = DatabaseApi.getInstance().createShortURL(headURL);
+            shortenedSequence = databaseApi.createShortURL(headURL);
         } catch (DatabaseInternalException e) {
             System.out.println(e.getMessage());
             assert false;

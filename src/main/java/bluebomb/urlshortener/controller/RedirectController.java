@@ -21,6 +21,9 @@ public class RedirectController {
     @Autowired
     HTMLDownloader htmlDownloader;
 
+    @Autowired
+	DatabaseApi databaseApi;
+
     /**
      * Uri checker service
      */
@@ -35,14 +38,15 @@ public class RedirectController {
     @CrossOrigin
     @RequestMapping(value = "{sequence}/ads", produces = {MediaType.TEXT_HTML_VALUE})
     public String ads(@PathVariable(value = "sequence") String sequence) throws DatabaseInternalException, DownloadHTMLInternalException {
-
         // Check sequence exist
-        if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+        if (!databaseApi.containsSequence(sequence)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
+
         }
 
         // Get ads url if is in DB
-        RedirectURL adsURL = DatabaseApi.getInstance().getAd(sequence);
+        RedirectURL adsURL = databaseApi.getAd(sequence);
+
 
         if (adsURL == null) {
             // Sequence has no ads

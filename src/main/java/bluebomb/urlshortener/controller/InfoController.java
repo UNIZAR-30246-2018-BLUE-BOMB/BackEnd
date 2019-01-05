@@ -25,11 +25,20 @@ import java.util.Map;
 @Controller
 public class InfoController {
 
+    /**
+     * Logger instance
+     */
     private static Logger logger = LoggerFactory.getLogger(InfoController.class);
 
+    /**
+     * Simple messaging template
+     */
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    /**
+     * Database api instance
+     */
     @Autowired
 	DatabaseApi databaseApi;
 
@@ -105,7 +114,7 @@ public class InfoController {
     public void getShortenedURLInfo(String sequence,
                                     @Header("simpSessionId") String simpSessionId,
                                     @Header("simpSessionAttributes") Map<String, Object> simpSessionAttributes
-    ) throws ShortenedInfoException, DatabaseInternalException {
+    ) throws ShortenedInfoException, DatabaseInternalException, InterruptedException {
 
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
@@ -150,19 +159,17 @@ public class InfoController {
                     new ShortenedInfo(sequence, originalURL, "", 0),
                     simpMessagingTemplate);
         } else {
-            new Thread(() -> {
-                // Start a thread that notify user when ad time has end
-                try {
-                    Thread.sleep(ad.getSecondsToRedirect() * 1000L);
-                } catch (Exception e) {
-                    // Error when thread try to sleep
-                }
-                sendShortenedInfoToSubscriber(simpSessionId,
-                        new ShortenedInfo(sequence, originalURL, "", 0),
-                        simpMessagingTemplate);
-            }).start();
+            // Send the ad URI to the user
             sendShortenedInfoToSubscriber(simpSessionId,
                     new ShortenedInfo(sequence, "", backEndURI + sequence + "/ads", ad.getSecondsToRedirect()),
+                    simpMessagingTemplate);
+
+            // Sleep ad timeout
+            Thread.sleep(ad.getSecondsToRedirect() * 1000L);
+
+            // Send original utl to subscriber
+            sendShortenedInfoToSubscriber(simpSessionId,
+                    new ShortenedInfo(sequence, originalURL, "", 0),
                     simpMessagingTemplate);
         }
     }
@@ -173,7 +180,7 @@ public class InfoController {
      * @param e exception captured
      */
     @SuppressWarnings("unused")
-    @MessageExceptionHandler({DatabaseInternalException.class, ShortenedInfoException.class})
+    @MessageExceptionHandler({DatabaseInternalException.class, ShortenedInfoException.class, InterruptedException.class})
     public void errorHandlerGetInfo(Exception e) {
         if (e instanceof ShortenedInfoException) {
             // User error

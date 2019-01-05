@@ -21,14 +21,22 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class StatsGlobalController {
 
+    /**
+     * Logger instance
+     */
     private static Logger logger = LoggerFactory.getLogger(InfoController.class);
 
+    /**
+     * Simple messaging template
+     */
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    /**
+     * Database api instance
+     */
     @Autowired
-	DatabaseApi databaseApi;
-
+    DatabaseApi databaseApi;
 
     /**
      * Send stats to all globalStats subscribers for some sequence and parameter

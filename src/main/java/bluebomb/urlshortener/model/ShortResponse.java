@@ -1,6 +1,5 @@
 package bluebomb.urlshortener.model;
 
-import org.springframework.beans.factory.annotation.Value;
 
 public class ShortResponse {
     private String sequence;

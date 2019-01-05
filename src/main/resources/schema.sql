@@ -17,7 +17,7 @@ create table browser_stat
     browser varchar(128) not null,
     clicks integer DEFAULT 0,
     primary key (seq, date, browser),
-    foreign key (seq) references short_url(id)
+    foreign key (seq) references short_url(sequence)
 );
 
 create table os_stat
@@ -27,5 +27,5 @@ create table os_stat
     os varchar(128) not null,
     clicks integer DEFAULT 0,
     primary key (seq, date, os),
-    foreign key (seq) references short_url(id)
+    foreign key (seq) references short_url(sequence)
 );

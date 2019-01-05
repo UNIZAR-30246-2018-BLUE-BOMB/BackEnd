@@ -146,6 +146,40 @@ public class DatabaseApi {
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)
             throws DatabaseInternalException {
+        if(containsSequence(sequence)) {
+            int b_clicks = -1, o_clicks = -1, aux;
+            String query = "";
+            java.sql.Date nowDate = new java.sql.Date(new Date().getTime());
+            try {
+                query = "SELECT clicks FROM browser_stat WHERE seq = ? AND date = ? AND browser = ?";
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser.toLowerCase()}, Integer.class);
+
+                query = "UPDATE browser_stat SET clicks = ? WHERE seq = ? AND date = ? AND browser = ?";
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser.toLowerCase()});
+                b_clicks = aux;
+            } catch (EmptyResultDataAccessException e) {
+                query = "INSERT INTO browser_stat(seq, date, browser, clicks) VALUES(?, ?, ?, ?)";
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser.toLowerCase(), 1});
+                b_clicks = 1;
+            }
+
+            try {
+                query = "SELECT clicks FROM os_stat WHERE seq = ? AND date = ? AND os = ?";
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os.toLowerCase()}, Integer.class);
+
+                query = "UPDATE os_stat SET clicks = ? WHERE seq = ? AND date = ? AND os = ?";
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os.toLowerCase()});
+                o_clicks = aux;
+            } catch (EmptyResultDataAccessException e) {
+                query = "INSERT INTO os_stat(seq, date, os, clicks) VALUES(?, ?, ?, ?)";
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, os.toLowerCase(), 1});
+                o_clicks = 1;
+            }
+            return new ImmutablePair<Integer, Integer>(o_clicks, b_clicks);
+        } else {
+            return null;
+        }
+        
         /*Connection connection = null;
         try {
             connection = DbManager.getConnection();
@@ -162,24 +196,7 @@ public class DatabaseApi {
             if(rs.first()) {
                 return new ImmutablePair<Integer,Integer>(rs.getInt("os"), 
                                                         rs.getInt("browser"));
-            }
-            return null;      
-            //throw new SQLException();    
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-                throw new DatabaseInternalException("addStats failed, rolling back");
-            } catch (SQLException e1) {
-                throw new DatabaseInternalException("addStats failed, cannot roll back");
-            }
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
+            }*/
     }
 
     /**
@@ -311,7 +328,7 @@ public class DatabaseApi {
      * @return stats associated with sequence filter by parameter or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */ 
-    public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
+    public ArrayList<Stats> getDailyStats(String sequence, String parameter, java.util.Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
         /*Connection connection = null;
         ArrayList<Stats> retVal = new ArrayList<Stats>();

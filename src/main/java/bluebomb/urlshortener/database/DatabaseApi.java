@@ -65,6 +65,10 @@ public class DatabaseApi {
         }
         return sequence;
     }
+
+    private boolean isSupported(String input){
+        return input.equals("os") || input.equals("browser");
+    }
     
     /**
      * Create a new Direct shortened URL without interstitialURL
@@ -211,30 +215,12 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String getHeadURL(@NotNull String sequence) throws DatabaseInternalException {
-        /*Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM get_head_url(?) AS url";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if(rs.first()) {
-                return rs.getString("url");
-            }
+        if(containsSequence(sequence)) {
+            String query = "SELECT url FROM short_url WHERE sequence = ?";
+            return jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getHeadURL failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
+        }
     }
 
     /**
@@ -247,44 +233,16 @@ public class DatabaseApi {
      */
     public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
-        /*Connection connection = null;
-        ArrayList<ClickStat> retVal = new ArrayList<ClickStat>();
-        String query = "";
-        switch (parameter.toLowerCase()) {
-            case "os":
-                query = "SELECT * FROM get_os_global_stats(?)";
-                break;
-            case "browser":
-                query = "SELECT * FROM get_browser_global_stats(?)";
-                break;
-            default:
+        if(containsSequence(sequence)) {
+            if(isSupported(parameter)){
+                String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
+                return new ArrayList<ClickStat>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
+            } else {
                 throw new DatabaseInternalException(parameter + " not supported");
+            }
+        } else {
+            return null;
         }
-
-        try {
-            connection = DbManager.getConnection();
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if (rs.first()) {
-                do {
-                    retVal.add(new ClickStat(rs.getString("item"), rs.getInt("number")));
-                } while (rs.next());
-            }
-            return retVal;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getGlobalStats failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
     }
 
     /**

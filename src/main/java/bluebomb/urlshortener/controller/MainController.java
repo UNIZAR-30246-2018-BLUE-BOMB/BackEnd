@@ -28,7 +28,7 @@ public class MainController {
 
     @GetMapping(value = "/test")
     public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
-        String retVal = databaseApi.getAd(t) + "";
+        String retVal = databaseApi.getGlobalStats(t, "os") + "";
         return retVal;
     }
 

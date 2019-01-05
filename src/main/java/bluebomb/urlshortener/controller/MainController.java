@@ -28,7 +28,8 @@ public class MainController {
 
     @GetMapping(value = "/test")
     public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
-        return databaseApi.addStats(t, "os", "browser").toString();
+        String retVal = databaseApi.getAd(t) + "";
+        return retVal;
     }
 
     /**

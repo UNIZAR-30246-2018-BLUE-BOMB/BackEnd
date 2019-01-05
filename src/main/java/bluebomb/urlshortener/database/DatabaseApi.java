@@ -179,24 +179,6 @@ public class DatabaseApi {
         } else {
             return null;
         }
-        
-        /*Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM insert_stat(?,?,?)";
-            PreparedStatement ps = 
-                connection.prepareStatement(query, 
-                                            ResultSet.TYPE_SCROLL_SENSITIVE, 
-                                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence); 
-            ps.setString(2, browser.toLowerCase());
-            ps.setString(3, os.toLowerCase());
-
-            ResultSet rs = ps.executeQuery(); //Execute query
-            if(rs.first()) {
-                return new ImmutablePair<Integer,Integer>(rs.getInt("os"), 
-                                                        rs.getInt("browser"));
-            }*/
     }
 
     /**
@@ -206,30 +188,19 @@ public class DatabaseApi {
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
-        /*Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM get_ad(?)";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if(rs.first()) {
-                return new RedirectURL(rs.getInt("t_out"), rs.getString("ad"));
+        if(containsSequence(sequence)) {
+            String query = "SELECT redirect FROM short_url WHERE sequence = ?";
+            String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
+            if(!interstitialURL.equals("empty")){
+                query = "SELECT time FROM short_url WHERE sequence = ?";
+                int secondsToRedirect = jdbcTemplate.queryForObject(query, new Object[]{sequence}, Integer.class);
+                return new RedirectURL(secondsToRedirect, interstitialURL);
+            } else {
+                return null;
             }
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getAd failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
+        }
     }
 
     /**

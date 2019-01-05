@@ -69,6 +69,28 @@ public class DatabaseApi {
     private boolean isSupported(String input){
         return input.equals("os") || input.equals("browser");
     }
+
+    private ArrayList<Stats> formatDailyStats(ArrayList<AuxClickStat> input){
+        Date aux_date = null;
+        ArrayList<ClickStat> aux_stats = null;
+        ArrayList<Stats> retVal = new ArrayList<Stats>();
+        Boolean first = true;
+        for (AuxClickStat item : input) {
+            if(item.getDate().equals(aux_date)) {
+                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+            } else {
+                if(!first) {
+                    retVal.add(new Stats(aux_date, aux_stats));
+                }
+                aux_date = item.getDate();
+                aux_stats = new ArrayList<ClickStat>();
+                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+                first = false;
+            }
+        }
+        retVal.add(new Stats(aux_date, aux_stats));
+        return retVal;
+    }
     
     /**
      * Create a new Direct shortened URL without interstitialURL
@@ -257,63 +279,35 @@ public class DatabaseApi {
      * @return stats associated with sequence filter by parameter or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */ 
-    public ArrayList<Stats> getDailyStats(String sequence, String parameter, java.util.Date startDate, Date endDate, String sortType,
+    public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
-        /*Connection connection = null;
-        ArrayList<Stats> retVal = new ArrayList<Stats>();
-        String query = "";
-        switch(parameter.toLowerCase()){
-            case "os":
-                query = "SELECT * FROM get_os_daily_stats(?,?,?) ORDER BY SUM " + sortType + " LIMIT ?";
-                break;
-            case "browser":
-                query = "SELECT * FROM get_browser_daily_stats(?,?,?) ORDER BY SUM " + sortType + " LIMIT ?";
-                break;
-            default:
+        if(containsSequence(sequence)) {
+            if(isSupported(parameter)){
+                if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {
+                    String query = "SELECT o.date, o." + parameter + " AS item, o.clicks, (SELECT SUM(clicks) " +
+                                                                    "FROM " + parameter + "_stat o2 " + 
+                                                                    "WHERE o2.seq = ? AND o2.date = o.date " + 
+                                                                    "GROUP BY o2.date) AS SUM " +
+                                    "FROM " + parameter + "_stat o " + 
+                                    "WHERE o.seq = ? AND o.date BETWEEN ? AND ? " +
+                                    "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
+                                    "ORDER BY SUM " + sortType +
+                                    " LIMIT ?";
+                    ArrayList<AuxClickStat> aux = new ArrayList<AuxClickStat>(jdbcTemplate.query(query, new Object[]{sequence, 
+                                                                                sequence, 
+                                                                                startDate,
+                                                                                endDate,
+                                                                                maxAmountOfDataToRetrieve}, 
+                                                                            new AuxClickStatRowMapper()));
+                    return formatDailyStats(aux);
+                } else {
+                    throw new DatabaseInternalException(sortType + " not supported");
+                }
+            } else {
                 throw new DatabaseInternalException(parameter + " not supported");
-        }
-        try {
-            connection = DbManager.getConnection();
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            System.out.println(startDate);
-            ps.setDate(2, new java.sql.Date(startDate.getTime()));
-            ps.setDate(3, new java.sql.Date(endDate.getTime()));
-            ps.setInt(4, maxAmountOfDataToRetrieve);
-            ResultSet rs = ps.executeQuery();
-            Date aux = null;
-            ArrayList<ClickStat> auxStat = null;
-            Boolean first = true;
-            if(rs.first()) {
-                do {
-                    if(rs.getDate("Date").equals(aux)) {
-                        auxStat.add(new ClickStat(rs.getString("item"), rs.getInt("click")));
-                    } else {
-                        if(!first) {
-                            retVal.add(new Stats(aux, auxStat));
-                        }
-                        aux = rs.getDate("Date");
-                        auxStat = new ArrayList<ClickStat>();
-                        auxStat.add(new ClickStat(rs.getString("item"), rs.getInt("click")));
-                        first = false;
-                    }
-                } while (rs.next());
-                retVal.add(new Stats(aux, auxStat));
-                return retVal;
             }
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getDailyStats failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }*/
-        return null;
+        }
     }
 }

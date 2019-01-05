@@ -17,6 +17,11 @@ public class Stats {
         this.clickStat = clickStat;
     }
 
+    public Stats() {
+        this.day = null;
+        this.clickStat = new ArrayList<ClickStat>();
+    }
+
     public Date getDay() {
         return day;
     }
@@ -33,5 +38,16 @@ public class Stats {
         this.clickStat = clickStat;
     }
 
+    public boolean addClickStat(ClickStat input){
+        return this.clickStat.add(input);
+    }
+
+    @Override
+    public String toString() {
+        return "Stats{" +
+                "day=" + day +
+                ", clickStat=" + clickStat +
+                '}';
+    }
 }
 

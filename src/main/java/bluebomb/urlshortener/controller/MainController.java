@@ -20,17 +20,19 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.util.Date;
+
 @RestController
 public class MainController {
 
     @Autowired
 	DatabaseApi databaseApi;
 
-    @GetMapping(value = "/test")
+    /*@GetMapping(value = "/test")
     public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
-        String retVal = databaseApi.getGlobalStats(t, "os") + "";
+        String retVal = databaseApi.getDailyStats(t, "os", new Date(1545658670776L), new Date(1546697899704L), "desc", 2) + "";
         return retVal;
-    }
+    }*/
 
     /**
      * Create new shortened URL

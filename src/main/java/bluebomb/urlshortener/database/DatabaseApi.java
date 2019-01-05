@@ -1,31 +1,97 @@
 package bluebomb.urlshortener.database;
 
-import bluebomb.urlshortener.config.DbManager;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.RedirectURL;
 
 import bluebomb.urlshortener.model.Stats;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
 import javax.validation.constraints.NotNull;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 
+@Repository
 public class DatabaseApi {
-    private static DatabaseApi ourInstance = new DatabaseApi();
 
-    public static DatabaseApi getInstance() {
-        return ourInstance;
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    private String toSequence(int input) {
+        int aux_value;
+        String sequence = "";
+        while(input > 0) {
+            aux_value = 87 + (input - 1) % 36;
+            switch(aux_value) {
+                case 87:
+                    sequence = "0" + sequence;
+                    break;
+                case 88:
+                    sequence = "1" + sequence;
+                    break;
+                case 89:
+                    sequence = "2" + sequence;
+                    break;
+                case 90:
+                    sequence = "3" + sequence;
+                    break;
+                case 91:
+                    sequence = "4" + sequence;
+                    break;
+                case 92:
+                    sequence = "5" + sequence;
+                    break;
+                case 93:
+                    sequence = "6" + sequence;
+                    break;
+                case 94:
+                    sequence = "7" + sequence;
+                    break;
+                case 95:
+                    sequence = "8" + sequence;
+                    break;
+                case 96:
+                    sequence = "9" + sequence;
+                    break;
+                default:
+                    sequence = (char) aux_value + sequence;
+                    break;
+            }
+            input = input / 62;
+        }
+        return sequence;
     }
 
-    private DatabaseApi() {
+    private boolean isSupported(String input){
+        return input.equals("os") || input.equals("browser");
     }
 
+    private ArrayList<Stats> formatDailyStats(ArrayList<AuxClickStat> input){
+        Date aux_date = null;
+        ArrayList<ClickStat> aux_stats = null;
+        ArrayList<Stats> retVal = new ArrayList<Stats>();
+        Boolean first = true;
+        for (AuxClickStat item : input) {
+            if(item.getDate().equals(aux_date)) {
+                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+            } else {
+                if(!first) {
+                    retVal.add(new Stats(aux_date, aux_stats));
+                }
+                aux_date = item.getDate();
+                aux_stats = new ArrayList<ClickStat>();
+                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+                first = false;
+            }
+        }
+        retVal.add(new Stats(aux_date, aux_stats));
+        return retVal;
+    }
+    
     /**
      * Create a new Direct shortened URL without interstitialURL
      *
@@ -34,7 +100,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL) throws DatabaseInternalException {
-        return createShortURL(headURL, "empty", 10);
+        return createShortURL(headURL, "empty", -1);
     }
 
     /**
@@ -46,7 +112,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, 10);
+        return createShortURL(headURL, interstitialURL, -1);
     }
 
     /**
@@ -60,37 +126,22 @@ public class DatabaseApi {
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect)
             throws DatabaseInternalException {
-        Connection connection = null;
+        String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
         try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM new_shortened_url(?,?,?) AS seq";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, headURL);
-            ps.setString(2, interstitialURL);
-            ps.setInt(3, secondsToRedirect);
-            ResultSet rs = ps.executeQuery(); //Execute query
-            if (rs.first()) {
-                return rs.getString("seq");
-            }
-            return null;
-            //throw new SQLException();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-                throw new DatabaseInternalException("createShortUrl failed, rolling back");
-            } catch (SQLException e1) {
-                throw new DatabaseInternalException("createShortUrl failed, cannot roll back");
-            }
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
-        }
+            return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
+        } catch (EmptyResultDataAccessException e){
+            query = "insert into short_url(url, redirect, time) values (?, ?, ?)";
+            jdbcTemplate.update(query, new Object[]{headURL, interstitialURL, secondsToRedirect});
+
+            query = "SELECT id FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
+            int id = jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, Integer.class);
+
+            query = "UPDATE short_url set sequence = ? WHERE id = ?";
+            String sequence = toSequence(id);
+            jdbcTemplate.update(query, new Object[]{sequence, id});
+            return sequence;
+        } 
+
     }
 
     /**
@@ -101,25 +152,12 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
+        String query = "SELECT id FROM short_url WHERE sequence = ?";
         try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM short_sequences WHERE seq = ?";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence); //replace seq = ? -> seq = sequence
-            ResultSet rs = ps.executeQuery(); //Execute query
-            return rs.first(); //Return if result is not empty
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("containsSequence failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
+            jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
+            return true;
+        } catch (EmptyResultDataAccessException e){
+            return false;
         }
     }
 
@@ -129,43 +167,43 @@ public class DatabaseApi {
      * @param sequence sequence
      * @param os       operating system
      * @param browser  browser
-     * @return (New OS number of clicks, New Browser number of clicks) or null if sequence non exist
+     * @return (New operating system number of clicks, New browser number of clicks) or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)
             throws DatabaseInternalException {
-        Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM insert_stat(?,?,?)";
-            PreparedStatement ps = 
-                connection.prepareStatement(query, 
-                                            ResultSet.TYPE_SCROLL_SENSITIVE, 
-                                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence); 
-            ps.setString(2, browser.toLowerCase());
-            ps.setString(3, os.toLowerCase());
+        if(containsSequence(sequence)) {
+            int b_clicks = -1, o_clicks = -1, aux;
+            String query = "";
+            java.sql.Date nowDate = new java.sql.Date(new Date().getTime());
+            try {
+                query = "SELECT clicks FROM browser_stat WHERE seq = ? AND date = ? AND browser = ?";
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser.toLowerCase()}, Integer.class);
 
-            ResultSet rs = ps.executeQuery(); //Execute query
-            if(rs.first()) {
-                return new ImmutablePair<Integer,Integer>(rs.getInt("os"), 
-                                                        rs.getInt("browser"));
+                query = "UPDATE browser_stat SET clicks = ? WHERE seq = ? AND date = ? AND browser = ?";
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser.toLowerCase()});
+                b_clicks = aux;
+            } catch (EmptyResultDataAccessException e) {
+                query = "INSERT INTO browser_stat(seq, date, browser, clicks) VALUES(?, ?, ?, ?)";
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser.toLowerCase(), 1});
+                b_clicks = 1;
             }
-            return null;      
-            //throw new SQLException();    
-        } catch (SQLException e) {
+
             try {
-                connection.rollback();
-                throw new DatabaseInternalException("addStats failed, rolling back");
-            } catch (SQLException e1) {
-                throw new DatabaseInternalException("addStats failed, cannot roll back");
+                query = "SELECT clicks FROM os_stat WHERE seq = ? AND date = ? AND os = ?";
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os.toLowerCase()}, Integer.class);
+
+                query = "UPDATE os_stat SET clicks = ? WHERE seq = ? AND date = ? AND os = ?";
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os.toLowerCase()});
+                o_clicks = aux;
+            } catch (EmptyResultDataAccessException e) {
+                query = "INSERT INTO os_stat(seq, date, os, clicks) VALUES(?, ?, ?, ?)";
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, os.toLowerCase(), 1});
+                o_clicks = 1;
             }
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
+            return new ImmutablePair<Integer, Integer>(o_clicks, b_clicks);
+        } else {
+            return null;
         }
     }
 
@@ -176,28 +214,18 @@ public class DatabaseApi {
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM get_ad(?)";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if(rs.first()) {
-                return new RedirectURL(rs.getInt("t_out"), rs.getString("ad"));
+        if(containsSequence(sequence)) {
+            String query = "SELECT redirect FROM short_url WHERE sequence = ?";
+            String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
+            if(!interstitialURL.equals("empty")){
+                query = "SELECT time FROM short_url WHERE sequence = ?";
+                int secondsToRedirect = jdbcTemplate.queryForObject(query, new Object[]{sequence}, Integer.class);
+                return new RedirectURL(secondsToRedirect, interstitialURL);
+            } else {
+                return null;
             }
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getAd failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
         }
     }
 
@@ -209,28 +237,11 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String getHeadURL(@NotNull String sequence) throws DatabaseInternalException {
-        Connection connection = null;
-        try {
-            connection = DbManager.getConnection();
-            String query = "SELECT * FROM get_head_url(?) AS url";
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if(rs.first()) {
-                return rs.getString("url");
-            }
+        if(containsSequence(sequence)) {
+            String query = "SELECT url FROM short_url WHERE sequence = ?";
+            return jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getHeadURL failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
         }
     }
 
@@ -244,42 +255,15 @@ public class DatabaseApi {
      */
     public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
-        Connection connection = null;
-        ArrayList<ClickStat> retVal = new ArrayList<ClickStat>();
-        String query = "";
-        switch (parameter.toLowerCase()) {
-            case "os":
-                query = "SELECT * FROM get_os_global_stats(?)";
-                break;
-            case "browser":
-                query = "SELECT * FROM get_browser_global_stats(?)";
-                break;
-            default:
+        if(containsSequence(sequence)) {
+            if(isSupported(parameter)){
+                String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
+                return new ArrayList<ClickStat>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
+            } else {
                 throw new DatabaseInternalException(parameter + " not supported");
-        }
-
-        try {
-            connection = DbManager.getConnection();
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            ResultSet rs = ps.executeQuery();
-            if (rs.first()) {
-                do {
-                    retVal.add(new ClickStat(rs.getString("item"), rs.getInt("number")));
-                } while (rs.next());
             }
-            return retVal;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getGlobalStats failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
+        } else {
+            return null;
         }
     }
 
@@ -297,60 +281,33 @@ public class DatabaseApi {
      */ 
     public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
-        Connection connection = null;
-        ArrayList<Stats> retVal = new ArrayList<Stats>();
-        String query = "";
-        switch(parameter.toLowerCase()){
-            case "os":
-                query = "SELECT * FROM get_os_daily_stats(?,?,?) ORDER BY SUM " + sortType + " LIMIT ?";
-                break;
-            case "browser":
-                query = "SELECT * FROM get_browser_daily_stats(?,?,?) ORDER BY SUM " + sortType + " LIMIT ?";
-                break;
-            default:
+        if(containsSequence(sequence)) {
+            if(isSupported(parameter)){
+                if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {
+                    String query = "SELECT o.date, o." + parameter + " AS item, o.clicks, (SELECT SUM(clicks) " +
+                                                                    "FROM " + parameter + "_stat o2 " + 
+                                                                    "WHERE o2.seq = ? AND o2.date = o.date " + 
+                                                                    "GROUP BY o2.date) AS SUM " +
+                                    "FROM " + parameter + "_stat o " + 
+                                    "WHERE o.seq = ? AND o.date BETWEEN ? AND ? " +
+                                    "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
+                                    "ORDER BY SUM " + sortType +
+                                    " LIMIT ?";
+                    ArrayList<AuxClickStat> aux = new ArrayList<AuxClickStat>(jdbcTemplate.query(query, new Object[]{sequence, 
+                                                                                sequence, 
+                                                                                startDate,
+                                                                                endDate,
+                                                                                maxAmountOfDataToRetrieve}, 
+                                                                            new AuxClickStatRowMapper()));
+                    return formatDailyStats(aux);
+                } else {
+                    throw new DatabaseInternalException(sortType + " not supported");
+                }
+            } else {
                 throw new DatabaseInternalException(parameter + " not supported");
-        }
-        try {
-            connection = DbManager.getConnection();
-            PreparedStatement ps =
-                    connection.prepareStatement(query,
-                            ResultSet.TYPE_SCROLL_SENSITIVE,
-                            ResultSet.CONCUR_UPDATABLE);
-            ps.setString(1, sequence);
-            System.out.println(startDate);
-            ps.setDate(2, new java.sql.Date(startDate.getTime()));
-            ps.setDate(3, new java.sql.Date(endDate.getTime()));
-            ps.setInt(4, maxAmountOfDataToRetrieve);
-            ResultSet rs = ps.executeQuery();
-            Date aux = null;
-            ArrayList<ClickStat> auxStat = null;
-            Boolean first = true;
-            if(rs.first()) {
-                do {
-                    if(rs.getDate("Date").equals(aux)) {
-                        auxStat.add(new ClickStat(rs.getString("item"), rs.getInt("click")));
-                    } else {
-                        if(!first) {
-                            retVal.add(new Stats(aux, auxStat));
-                        }
-                        aux = rs.getDate("Date");
-                        auxStat = new ArrayList<ClickStat>();
-                        auxStat.add(new ClickStat(rs.getString("item"), rs.getInt("click")));
-                        first = false;
-                    }
-                } while (rs.next());
-                retVal.add(new Stats(aux, auxStat));
-                return retVal;
             }
+        } else {
             return null;
-        } catch (SQLException e) {
-            throw new DatabaseInternalException("getDailyStats failed");
-        } finally {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new DatabaseInternalException("Cannot close connection");
-            }
         }
     }
 }

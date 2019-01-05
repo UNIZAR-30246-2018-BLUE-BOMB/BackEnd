@@ -3,7 +3,12 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.database.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.lang.NonNull;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -13,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Check if an URL or an sequence is reachable
  */
+@Service
 public class AvailableURIChecker {
     /**
      * Timeout when get petition is done in milliseconds
@@ -28,34 +34,6 @@ public class AvailableURIChecker {
      * Reached URLs list
      */
     private ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
-
-    /**
-     * Thread that check if all URLs are reachable
-     */
-    private Thread availableURLCheckerThread;
-
-    /**
-     * Instance
-     */
-    private static AvailableURIChecker ourInstance = new AvailableURIChecker();
-
-    /**
-     * Get an instance of the class (Singleton pattern)
-     *
-     * @return the instance of the class
-     */
-    public static AvailableURIChecker getInstance() {
-        return ourInstance;
-    }
-
-    /**
-     * Init background thread
-     */
-    private AvailableURIChecker() {
-        availableURLCheckerThread = new Thread(this::checkIfURLSAreReachableLoop);
-        availableURLCheckerThread.start();
-
-    }
 
     /**
      * Return true if URL is an available URL (get response status = 200)
@@ -74,6 +52,9 @@ public class AvailableURIChecker {
             return getURLResponseStatusFromGet(url) == 200;
     }
 
+    @Autowired
+    DatabaseApi databaseApi;
+
     /**
      * Return true if the original URL identified by id sequence is available
      *
@@ -84,7 +65,7 @@ public class AvailableURIChecker {
         // This function will not perform the GET petition, this will be done by an external periodic process, this one
         // will check the available sequence tables created by this process
         try {
-            String url = DatabaseApi.getInstance().getHeadURL(sequence);
+            String url = databaseApi.getHeadURL(sequence);
             if (url != null) {
                 boolean isAvailable = isURLAvailable(url);
                 if (!urlReachedMap.containsKey(url)) {
@@ -111,7 +92,7 @@ public class AvailableURIChecker {
         // will check the available sequence tables created by this process
         // It will only be checked if not be in the table yet
         try {
-            RedirectURL adURL = DatabaseApi.getInstance().getAd(sequence);
+            RedirectURL adURL = databaseApi.getAd(sequence);
             if (adURL != null) {
                 boolean isAvailable = isURLAvailable(adURL.getInterstitialURL());
                 if (!urlReachedMap.containsKey(adURL.getInterstitialURL())) {
@@ -138,23 +119,20 @@ public class AvailableURIChecker {
     }
 
     /**
+     * Number of threads to execute available check
+     */
+    @Value("${app.available-uri-checker-threads:}")
+    private long availableUriCheckerThreads;
+
+    /**
      * Check if URLs are reachable in infinite loop
      */
-    private void checkIfURLSAreReachableLoop() {
-        while (true) {
-            // Update list response status
-            urlReachedMap.forEach((url, state) ->
-                    state.set(getURLResponseStatusFromGet(url) == 200)
-            );
-
-            try {
-                // Avoid too much cpu consumption in this process
-                // The probability of a fall of the site in the last 5 seconds is low
-                Thread.sleep(TIME_BETWEEN_URL_AVAILABLE_CHECK);
-            } catch (InterruptedException e) {
-                // Process cannot sleep
-            }
-        }
+    @Scheduled(fixedRate = TIME_BETWEEN_URL_AVAILABLE_CHECK)
+    public void checkIfURLSAreReachableLoop() {
+        // Update list response status
+        urlReachedMap.forEach(availableUriCheckerThreads, (url, state) ->
+                state.set(getURLResponseStatusFromGet(url) == 200)
+        );
     }
 
     /**

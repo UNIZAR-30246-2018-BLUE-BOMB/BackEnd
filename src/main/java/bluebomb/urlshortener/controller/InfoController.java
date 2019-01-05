@@ -1,6 +1,7 @@
 package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
 import bluebomb.urlshortener.model.*;
@@ -10,6 +11,7 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageExceptionHandler;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,7 +19,6 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import bluebomb.urlshortener.config.CommonValues;
 
 import java.util.Map;
 
@@ -28,6 +29,9 @@ public class InfoController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
+
+    @Autowired
+	DatabaseApi databaseApi;
 
     /**
      * Send original url to subscriber
@@ -67,12 +71,27 @@ public class InfoController {
 
         simpMessagingTemplate.convertAndSendToUser(sessionId,
                 "/queue/error/info",
-                new ErrorMessageWS(error),
+                new WSApiError(error),
                 headerAccessor.getMessageHeaders());
     }
 
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
+
+    /**
+     * User agent detector service
+     */
     @Autowired
     UserAgentDetector userAgentDetector;
+
+    /**
+     * Uri checker service
+     */
+    @Autowired
+    AvailableURIChecker availableURIChecker;
 
     /**
      * Redirection function to get original URL and statics
@@ -91,13 +110,12 @@ public class InfoController {
         // Get user agent set on interceptor
         String userAgent = (String) simpSessionAttributes.get("user-agent");
 
-        if (!DatabaseApi.getInstance().containsSequence(sequence)) {
+        if (!databaseApi.containsSequence(sequence)) {
             // Unavailable sequence
             throw new ShortenedInfoException("Unavailable sequence: " + sequence, simpSessionId);
         }
 
-        if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence) || !AvailableURIChecker.getInstance()
-                .isSequenceAvailable(sequence)) {
+        if (!availableURIChecker.isSequenceAdsAvailable(sequence) || !availableURIChecker.isSequenceAvailable(sequence)) {
             // Sequence non reachable
             throw new ShortenedInfoException("Sequence non reachable: " + sequence, simpSessionId);
         }
@@ -105,7 +123,7 @@ public class InfoController {
         // Update statics
         String browser = userAgentDetector.detectBrowser(userAgent);
         String os = userAgentDetector.detectOS(userAgent);
-        ImmutablePair<Integer, Integer> newStatics = DatabaseApi.getInstance().addStats(sequence, os, browser);
+        ImmutablePair<Integer, Integer> newStatics = databaseApi.addStats(sequence, os, browser);
 
         // Notify new statics to all subscribers
         ClickStat clickStatOS = new ClickStat(os, newStatics.getRight());
@@ -125,8 +143,8 @@ public class InfoController {
         );
 
         // If adds send ad and start thread and if not return url
-        RedirectURL ad = DatabaseApi.getInstance().getAd(sequence);
-        String originalURL = DatabaseApi.getInstance().getHeadURL(sequence);
+        RedirectURL ad = databaseApi.getAd(sequence);
+        String originalURL = databaseApi.getHeadURL(sequence);
         if (ad == null) {
             sendShortenedInfoToSubscriber(simpSessionId,
                     new ShortenedInfo(sequence, originalURL, "", 0),
@@ -144,7 +162,7 @@ public class InfoController {
                         simpMessagingTemplate);
             }).start();
             sendShortenedInfoToSubscriber(simpSessionId,
-                    new ShortenedInfo(sequence, "", CommonValues.BACK_END_URI + sequence + "/ads", ad.getSecondsToRedirect()),
+                    new ShortenedInfo(sequence, "", backEndURI + sequence + "/ads", ad.getSecondsToRedirect()),
                     simpMessagingTemplate);
         }
     }

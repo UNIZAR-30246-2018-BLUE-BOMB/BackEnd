@@ -31,16 +31,20 @@ repositories {
 dependencies {
     // Spring
     implementation('org.springframework.boot:spring-boot-starter')
+    implementation 'org.springframework.boot:spring-boot-configuration-processor'
     compile("org.springframework.boot:spring-boot-starter-web")
     compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile('org.springframework.boot:spring-boot-starter-jdbc')
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf")
     
     // Database
-    compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
+    compile('com.h2database:h2')
+    // compile group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
 
     // User agent detection
     compile group: 'eu.bitwalker', name: 'UserAgentUtils', version: '1.21'
 
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    // Usage of pair
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     
     // QR generator

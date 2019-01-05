@@ -1,8 +1,6 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.config.CommonValues;
 import bluebomb.urlshortener.database.DatabaseApi;
-import bluebomb.urlshortener.errors.SequenceNotFoundError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.QrGeneratorBadParametersException;
 import bluebomb.urlshortener.exceptions.QrGeneratorInternalException;
@@ -13,6 +11,7 @@ import bluebomb.urlshortener.services.QRCodeGenerator;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +21,34 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 public class MainController {
+
+    /**
+     * Front end base redirect page uri
+     */
+    @Value("${app.front-end-redirect-uri:}")
+    private String frontEndRedirectURI;
+
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
+
+    /**
+     * Uri of websocket endpoint in the back end
+     */
+    @Value("${app.back-end-ws-uri:}")
+    private String backEndWsURI;
+
+    @Autowired
+    DatabaseApi databaseApi;
+
+    /**
+     * Uri checker service
+     */
+    @Autowired
+    AvailableURIChecker availableURIChecker;
+
     /**
      * Create new shortened URL
      *
@@ -36,32 +63,33 @@ public class MainController {
                                      @RequestParam(value = "interstitialURL", required = false) String interstitialURL,
                                      @RequestParam(value = "secondsToRedirect", required = false) Integer secondsToRedirect) {
         // Original URL is not reachable
-        if (!AvailableURIChecker.getInstance().isURLAvailable(headURL)) {
+        if (!availableURIChecker.isURLAvailable(headURL)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
         }
 
         // Ad URL is not reachable
-        if (interstitialURL != null && !AvailableURIChecker.getInstance().isURLAvailable(interstitialURL)) {
+        if (interstitialURL != null && !availableURIChecker.isURLAvailable(interstitialURL)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ad URL is not reachable");
         }
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null) {
-            secondsToRedirect = 0;
+            interstitialURL = "empty";
+            secondsToRedirect = -1;
         } else if (secondsToRedirect == null) secondsToRedirect = 10;
 
         String sequence;
         try {
-            sequence = DatabaseApi.getInstance().createShortURL(headURL, interstitialURL, secondsToRedirect);
+            sequence = databaseApi.createShortURL(headURL, interstitialURL, secondsToRedirect);
         } catch (DatabaseInternalException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error when creating shortened URL");
         }
 
-        AvailableURIChecker.getInstance().registerURL(headURL);
+        availableURIChecker.registerURL(headURL);
 
-        if (interstitialURL != null) AvailableURIChecker.getInstance().registerURL(interstitialURL);
+        if (!interstitialURL.equals("empty")) availableURIChecker.registerURL(interstitialURL);
 
-        return new ShortResponse(sequence, interstitialURL == null);
+        return new ShortResponse(sequence, interstitialURL.equals("empty"), frontEndRedirectURI, backEndURI, backEndWsURI);
     }
 
     /**
@@ -95,11 +123,11 @@ public class MainController {
                         @RequestHeader("Accept") String acceptHeader) {
         // Check sequence
         try {
-            if (!DatabaseApi.getInstance().containsSequence(sequence)) {
-                throw new SequenceNotFoundError();
-            } else if (!AvailableURIChecker.getInstance().isSequenceAvailable(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
-            } else if (!AvailableURIChecker.getInstance().isSequenceAdsAvailable(sequence)) {
+            } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
+            } else if (!availableURIChecker.isSequenceAdsAvailable(sequence)) {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated ad is not available");
             }
         } catch (DatabaseInternalException e) {
@@ -119,7 +147,7 @@ public class MainController {
         }
 
         // Check logo
-        if (logo != null && !logo.isEmpty() && !AvailableURIChecker.getInstance().isURLAvailable(logo)) {
+        if (logo != null && !logo.isEmpty() && !availableURIChecker.isURLAvailable(logo)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logo resource is not available");
         }
 
@@ -159,7 +187,7 @@ public class MainController {
 
         // Return generated QR
         try {
-            return qrCodeGenerator.generate(CommonValues.FRONT_END_REDIRECT_URI + "/" + sequence, responseType, size,
+            return qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
                     errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
         } catch (QrGeneratorBadParametersException e) {
             // Bad parameters

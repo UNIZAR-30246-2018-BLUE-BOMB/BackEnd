@@ -4,11 +4,11 @@ import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Component
+@Service
 public class HTMLDownloader {
 
     /**

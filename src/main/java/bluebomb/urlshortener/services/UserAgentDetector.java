@@ -3,7 +3,7 @@ package bluebomb.urlshortener.services;
 import bluebomb.urlshortener.model.StatsAgent;
 import eu.bitwalker.useragentutils.UserAgent;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Detect OS and browser from an user agent
  */
-@Component
+@Service
 public class UserAgentDetector {
     private Set<String> supportedOperatingSystems = new HashSet<>(Arrays.asList(
             "Windows",

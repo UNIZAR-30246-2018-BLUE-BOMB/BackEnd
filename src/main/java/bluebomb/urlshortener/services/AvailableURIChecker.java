@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.lang.NonNull;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Check if an URL or an sequence is reachable
  */
-@Component
+@Service
 public class AvailableURIChecker {
     /**
      * Timeout when get petition is done in milliseconds
@@ -34,19 +34,6 @@ public class AvailableURIChecker {
      * Reached URLs list
      */
     private ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
-  
-
-    /**
-     *
-     * Get it high to avoid too much cpu consumption in this process
-     * The probability of a fall of the site in the last 10 seconds is low
-     */
-    private static final int TIME_BETWEEN_URL_AVAILABLE_CHECK = 10000;
-
-    /**
-     * Reached URLs list
-     */
-    private static ConcurrentHashMap<String, AtomicBoolean> urlReachedMap = new ConcurrentHashMap<>();
 
     /**
      * Return true if URL is an available URL (get response status = 200)
@@ -64,6 +51,9 @@ public class AvailableURIChecker {
         else
             return getURLResponseStatusFromGet(url) == 200;
     }
+
+    @Autowired
+    DatabaseApi databaseApi;
 
     /**
      * Return true if the original URL identified by id sequence is available

@@ -27,7 +27,7 @@ public class StatsController {
     AvailableURIChecker availableURIChecker;
 
     @Autowired
-	DatabaseApi databaseApi;
+    DatabaseApi databaseApi;
 
     /**
      * Gets the stats of the shortened URL
@@ -50,7 +50,7 @@ public class StatsController {
                                           @RequestParam(value = "maxAmountOfDataToRetrieve") Integer maxAmountOfDataToRetrieve) {
         // Check sequence
         try {
-            if ((!databaseApi.containsSequence(sequence)) {
+            if (!databaseApi.containsSequence(sequence)) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Original URL is not available");
             } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
 

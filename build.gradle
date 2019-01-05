@@ -36,7 +36,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-websocket")
     compile('org.springframework.boot:spring-boot-starter-jdbc')
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
-
     
     // Database
     compile('com.h2database:h2')

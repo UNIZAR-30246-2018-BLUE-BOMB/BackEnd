@@ -19,19 +19,29 @@ import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-import java.util.Date;
-
 @RestController
 public class MainController {
 
-    @Autowired
-	DatabaseApi databaseApi;
+    /**
+     * Front end base redirect page uri
+     */
+    @Value("${app.front-end-redirect-uri:}")
+    private String frontEndRedirectURI;
 
-    /*@GetMapping(value = "/test")
-    public String test(@RequestParam(value = "t") String t) throws DatabaseInternalException {
-        String retVal = databaseApi.getDailyStats(t, "os", new Date(1545658670776L), new Date(1546697899704L), "desc", 2) + "";
-        return retVal;
-    }*/
+    /**
+     * Uri of the back end
+     */
+    @Value("${app.back-end-uri:}")
+    private String backEndURI;
+
+    /**
+     * Uri of websocket endpoint in the back end
+     */
+    @Value("${app.back-end-ws-uri:}")
+    private String backEndWsURI;
+
+    @Autowired
+    DatabaseApi databaseApi;
 
     /**
      * Uri checker service
@@ -77,16 +87,10 @@ public class MainController {
 
         availableURIChecker.registerURL(headURL);
 
-        if (interstitialURL != null) availableURIChecker.registerURL(interstitialURL);
+        if (!interstitialURL.equals("empty")) availableURIChecker.registerURL(interstitialURL);
 
-        return new ShortResponse(sequence, interstitialURL == null);
+        return new ShortResponse(sequence, interstitialURL.equals("empty"), frontEndRedirectURI, backEndURI, backEndWsURI);
     }
-
-    /**
-     * Front end base redirect page uri
-     */
-    @Value("${app.front-end-redirect-uri:}")
-    private String frontEndRedirectURI;
 
     /**
      * QR code generator service

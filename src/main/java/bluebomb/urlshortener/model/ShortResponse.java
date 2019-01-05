@@ -24,28 +24,11 @@ public class ShortResponse {
 
     private String adsUrl;
 
-    /**
-     * Front end base redirect page uri
-     */
-    @Value("${app.front-end-redirect-uri:}")
-    private String frontEndRedirectURI;
-
-    /**
-     * Uri of the back end
-     */
-    @Value("${app.back-end-uri:}")
-    private String backEndURI;
-
-    /**
-     * Uri of websocket endpoint in the back end
-     */
-    @Value("${app.back-end-ws-uri:}")
-    private String backEndWsURI;
 
     public ShortResponse() {
     }
 
-    public ShortResponse(String sequence, boolean hadAds) {
+    public ShortResponse(String sequence, boolean hadAds, final String frontEndRedirectURI, final String backEndURI, final String backEndWsURI) {
         this.sequence = sequence;
         this.shortedUrl = frontEndRedirectURI + "/" + sequence;
         this.qrReferenceUrl = backEndURI + "/" + sequence + "/qr";

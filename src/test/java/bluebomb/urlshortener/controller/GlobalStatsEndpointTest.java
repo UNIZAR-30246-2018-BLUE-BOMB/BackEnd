@@ -111,7 +111,7 @@ public class GlobalStatsEndpointTest {
             assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
             assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
-            fail("Original URL not received");
+            fail("Not received");
         }
     }
 
@@ -171,7 +171,7 @@ public class GlobalStatsEndpointTest {
             assertEquals("Linux", globalStats.getStats().get(0).getAgent());
             assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
-            fail("Original URL not received");
+            fail("Not received");
         }
     }
 
@@ -228,7 +228,7 @@ public class GlobalStatsEndpointTest {
             GlobalStats globalStats = messagesCaptured.get(0);
             assertEquals(sequence, globalStats.getSequence());
         } else {
-            fail("Original URL not received");
+            fail("Not received");
         }
     }
 
@@ -297,7 +297,7 @@ public class GlobalStatsEndpointTest {
             assertEquals("Linux", globalStats.getStats().get(0).getAgent());
             assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
-            fail("Original URL not received");
+            fail("Not received");
         }
     }
 
@@ -366,7 +366,183 @@ public class GlobalStatsEndpointTest {
             assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
             assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
-            fail("Original URL not received");
+            fail("Not received");
+        }
+    }
+
+    @Test
+    public void globalStatsEndpointInfoFromTopicOSOnChange() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final String parameter = "os";
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(2);
+
+        final String sequence = shortenedSequence;
+
+        final ClickStatArrayListFrameHandler shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(messagesToReceive);
+
+        GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,
+                messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+                // Update topic stats
+                session.send("/app/info", sequence);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Subscribe to topic
+                session.subscribe("/user/stats/global" , shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/stats/global/" + parameter, sequence);
+
+                // Subscribe to topic
+                session.subscribe("/topic/stats/global/" + parameter + "/" + sequence, shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/info", sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+            ArrayList<GlobalStats> messagesCaptured = shortenedInfoFrameHandler.getMessagesCaptured();
+            assertEquals(2, messagesCaptured.size());
+            GlobalStats globalStats = messagesCaptured.get(0);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Linux", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
+            int clicksBefore = globalStats.getStats().get(0).getClicks();
+
+            globalStats = messagesCaptured.get(1);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Linux", globalStats.getStats().get(0).getAgent());
+            assert clicksBefore + 1 == globalStats.getStats().get(0).getClicks();
+
+        } else {
+            fail("Not received");
+        }
+    }
+
+    @Test
+    public void globalStatsEndpointInfoFromTopicBrowserOnChange() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final String parameter = "browser";
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(2);
+
+        final String sequence = shortenedSequence;
+
+        final ClickStatArrayListFrameHandler shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(messagesToReceive);
+
+        GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,
+                messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+                // Update topic stats
+                session.send("/app/info", sequence);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Subscribe to topic
+                session.subscribe("/user/stats/global" , shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/stats/global/" + parameter, sequence);
+
+                // Subscribe to topic
+                session.subscribe("/topic/stats/global/" + parameter + "/" + sequence, shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/info", sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+            ArrayList<GlobalStats> messagesCaptured = shortenedInfoFrameHandler.getMessagesCaptured();
+            assertEquals(2, messagesCaptured.size());
+            GlobalStats globalStats = messagesCaptured.get(0);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
+            int clicksBefore = globalStats.getStats().get(0).getClicks();
+
+            globalStats = messagesCaptured.get(1);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
+            assert clicksBefore + 1 == globalStats.getStats().get(0).getClicks();
+
+        } else {
+            fail("Not received");
         }
     }
 

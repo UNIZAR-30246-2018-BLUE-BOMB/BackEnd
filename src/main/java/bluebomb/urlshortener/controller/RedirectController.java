@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 

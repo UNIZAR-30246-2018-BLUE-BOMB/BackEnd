@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.ShortenedInfoException;
@@ -161,7 +161,7 @@ public class InfoController {
         } else {
             // Send the ad URI to the user
             sendShortenedInfoToSubscriber(simpSessionId,
-                    new ShortenedInfo(sequence, "", backEndURI + sequence + "/ads", ad.getSecondsToRedirect()),
+                    new ShortenedInfo(sequence, "", backEndURI + "/" + sequence + "/ads", ad.getSecondsToRedirect()),
                     simpMessagingTemplate);
 
             // Sleep ad timeout

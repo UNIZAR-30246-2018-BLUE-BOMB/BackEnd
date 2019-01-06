@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.services;
 
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
 import org.springframework.beans.factory.annotation.Autowired;

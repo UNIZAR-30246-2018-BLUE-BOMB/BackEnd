@@ -1,10 +1,10 @@
-package bluebomb.urlshortener.database;
+package bluebomb.urlshortener.database.rowmapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
-import bluebomb.urlshortener.model.ClickStat;;
+import bluebomb.urlshortener.model.ClickStat;
 
 public class ClickStatRowMapper implements RowMapper<ClickStat> {
     @Override

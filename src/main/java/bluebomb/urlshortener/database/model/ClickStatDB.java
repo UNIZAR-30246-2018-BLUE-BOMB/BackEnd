@@ -1,21 +1,21 @@
-package bluebomb.urlshortener.database;
+package bluebomb.urlshortener.database.model;
 
 import java.util.Date;
 
-public class AuxClickStat {
+public class ClickStatDB {
     private Date date;
     private String agent;
     private int clicks;
     private int sum;
 
-    public AuxClickStat(Date date, String agent, int clicks, int sum) {
+    public ClickStatDB(Date date, String agent, int clicks, int sum) {
         this.date = date;
         this.agent = agent;
         this.clicks = clicks;
         this.sum = sum;
     }
 
-    public AuxClickStat() {
+    public ClickStatDB() {
     }
 
     public Date getDate() {
@@ -52,7 +52,7 @@ public class AuxClickStat {
 
     @Override
     public String toString() {
-        return "AuxClickStat{" +
+        return "ClickStatDB{" +
                 "date=" + date +
                 ", agent='" + agent + '\'' +
                 ", clicks=" + clicks +

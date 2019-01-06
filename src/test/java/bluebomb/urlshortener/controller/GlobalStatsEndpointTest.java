@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.model.GlobalStats;
@@ -56,7 +56,67 @@ public class GlobalStatsEndpointTest {
     }
 
     @Test
-    public void globalStatsEndpointInfoFromTopic() throws Exception {
+    public void globalStatsEndpointInfoFromTopicBrowser() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final String parameter = "browser";
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(1);
+
+        final String sequence = shortenedSequence;
+
+        final ClickStatArrayListFrameHandler shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(messagesToReceive);
+
+        GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,
+                messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+
+                // Subscribe to topic
+                session.subscribe("/topic/stats/global/" + parameter + "/" + sequence, shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/info", sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+            ArrayList<GlobalStats> messagesCaptured = shortenedInfoFrameHandler.getMessagesCaptured();
+            assertEquals(1, messagesCaptured.size());
+            GlobalStats globalStats = messagesCaptured.get(0);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
+        } else {
+            fail("Original URL not received");
+        }
+    }
+
+    @Test
+    public void globalStatsEndpointInfoFromTopicOS() throws Exception {
         final String headURL = "http://www.google.de";
         String shortenedSequence = "";
         try {
@@ -108,13 +168,15 @@ public class GlobalStatsEndpointTest {
             GlobalStats globalStats = messagesCaptured.get(0);
             assertEquals(sequence, globalStats.getSequence());
             assert globalStats.getStats().size()== 1;
+            assertEquals("Linux", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
             fail("Original URL not received");
         }
     }
 
     @Test
-    public void globalStatsEndpointTotalStats() throws Exception {
+    public void globalStatsEndpointTotalStatsEmpty() throws Exception {
         final String headURL = "http://www.google.de";
         String shortenedSequence = "";
         try {
@@ -165,7 +227,144 @@ public class GlobalStatsEndpointTest {
             assertEquals(1, messagesCaptured.size());
             GlobalStats globalStats = messagesCaptured.get(0);
             assertEquals(sequence, globalStats.getSequence());
-            assert globalStats.getStats().size() >= 1;
+        } else {
+            fail("Original URL not received");
+        }
+    }
+
+    @Test
+    public void globalStatsEndpointTotalStatsAccumulatedOS() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final String parameter = "os";
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(1);
+
+        final String sequence = shortenedSequence;
+
+        final ClickStatArrayListFrameHandler shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(messagesToReceive);
+
+        GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,
+                messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+                // Update topic stats
+                session.send("/app/info", sequence);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+
+                // Subscribe to topic
+                session.subscribe("/user/stats/global" , shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/stats/global/" + parameter, sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+            ArrayList<GlobalStats> messagesCaptured = shortenedInfoFrameHandler.getMessagesCaptured();
+            assertEquals(1, messagesCaptured.size());
+            GlobalStats globalStats = messagesCaptured.get(0);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Linux", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
+        } else {
+            fail("Original URL not received");
+        }
+    }
+
+    @Test
+    public void globalStatsEndpointTotalStatsAccumulatedBrowser() throws Exception {
+        final String headURL = "http://www.google.de";
+        String shortenedSequence = "";
+        try {
+            // Create shortened URL if not exist
+            shortenedSequence = databaseApi.createShortURL(headURL);
+        } catch (DatabaseInternalException e) {
+            System.out.println(e.getMessage());
+            assert false;
+        }
+
+        final String parameter = "browser";
+
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+
+        final CountDownLatch messagesToReceive = new CountDownLatch(1);
+
+        final String sequence = shortenedSequence;
+
+        final ClickStatArrayListFrameHandler shortenedInfoFrameHandler = new ClickStatArrayListFrameHandler(messagesToReceive);
+
+        GlobalStatsEndpointStompSessionHandler handler = new GlobalStatsEndpointStompSessionHandler(failure,
+                messagesToReceive) {
+            @Override
+            public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
+                super.afterConnected(session, connectedHeaders);
+                // Update topic stats
+                session.send("/app/info", sequence);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+
+                // Subscribe to topic
+                session.subscribe("/user/stats/global" , shortenedInfoFrameHandler);
+
+                try {
+                    Thread.sleep(1000);
+                }catch (InterruptedException w){
+                    assert false;
+                }
+
+                // Update topic stats
+                session.send("/app/stats/global/" + parameter, sequence);
+            }
+        };
+
+        this.stompClient.connect("ws://localhost:{port}/ws", this.headers, handler, this.port);
+
+        if (messagesToReceive.await(10, TimeUnit.SECONDS)) {
+            if (failure.get() != null) {
+                throw new AssertionError("", failure.get());
+            }
+            ArrayList<GlobalStats> messagesCaptured = shortenedInfoFrameHandler.getMessagesCaptured();
+            assertEquals(1, messagesCaptured.size());
+            GlobalStats globalStats = messagesCaptured.get(0);
+            assertEquals(sequence, globalStats.getSequence());
+            assert globalStats.getStats().size()== 1;
+            assertEquals("Firefox", globalStats.getStats().get(0).getAgent());
+            assert 1 <= globalStats.getStats().get(0).getClicks();
         } else {
             fail("Original URL not received");
         }

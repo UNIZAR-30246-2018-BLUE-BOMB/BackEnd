@@ -1,5 +1,8 @@
-package bluebomb.urlshortener.database;
+package bluebomb.urlshortener.database.api;
 
+import bluebomb.urlshortener.database.model.ClickStatDB;
+import bluebomb.urlshortener.database.rowmapper.ClickStatDBRowMapper;
+import bluebomb.urlshortener.database.rowmapper.ClickStatRowMapper;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.RedirectURL;
@@ -28,34 +31,34 @@ public class DatabaseApi {
             aux_value = 87 + (input - 1) % 36;
             switch(aux_value) {
                 case 87:
-                    sequence = "0" + sequence;
+                    sequence = "0".concat(sequence);
                     break;
                 case 88:
-                    sequence = "1" + sequence;
+                    sequence = "1".concat(sequence);
                     break;
                 case 89:
-                    sequence = "2" + sequence;
+                    sequence = "2".concat(sequence);
                     break;
                 case 90:
-                    sequence = "3" + sequence;
+                    sequence = "3".concat(sequence);
                     break;
                 case 91:
-                    sequence = "4" + sequence;
+                    sequence = "4".concat(sequence);
                     break;
                 case 92:
-                    sequence = "5" + sequence;
+                    sequence = "5".concat(sequence);
                     break;
                 case 93:
-                    sequence = "6" + sequence;
+                    sequence = "6".concat(sequence);
                     break;
                 case 94:
-                    sequence = "7" + sequence;
+                    sequence = "7".concat(sequence);
                     break;
                 case 95:
-                    sequence = "8" + sequence;
+                    sequence = "8".concat(sequence);
                     break;
                 case 96:
-                    sequence = "9" + sequence;
+                    sequence = "9".concat(sequence);
                     break;
                 default:
                     sequence = (char) aux_value + sequence;
@@ -70,12 +73,12 @@ public class DatabaseApi {
         return input.equals("os") || input.equals("browser");
     }
 
-    private ArrayList<Stats> formatDailyStats(ArrayList<AuxClickStat> input){
+    private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
         Date aux_date = null;
         ArrayList<ClickStat> aux_stats = null;
         ArrayList<Stats> retVal = new ArrayList<Stats>();
-        Boolean first = true;
-        for (AuxClickStat item : input) {
+        boolean first = true;
+        for (ClickStatDB item : input) {
             if(item.getDate().equals(aux_date)) {
                 aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
             } else {
@@ -178,30 +181,30 @@ public class DatabaseApi {
             java.sql.Date nowDate = new java.sql.Date(new Date().getTime());
             try {
                 query = "SELECT clicks FROM browser_stat WHERE seq = ? AND date = ? AND browser = ?";
-                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser.toLowerCase()}, Integer.class);
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser}, Integer.class);
 
                 query = "UPDATE browser_stat SET clicks = ? WHERE seq = ? AND date = ? AND browser = ?";
-                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser.toLowerCase()});
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser});
                 b_clicks = aux;
             } catch (EmptyResultDataAccessException e) {
                 query = "INSERT INTO browser_stat(seq, date, browser, clicks) VALUES(?, ?, ?, ?)";
-                jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser.toLowerCase(), 1});
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser, 1});
                 b_clicks = 1;
             }
 
             try {
                 query = "SELECT clicks FROM os_stat WHERE seq = ? AND date = ? AND os = ?";
-                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os.toLowerCase()}, Integer.class);
+                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os}, Integer.class);
 
                 query = "UPDATE os_stat SET clicks = ? WHERE seq = ? AND date = ? AND os = ?";
-                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os.toLowerCase()});
+                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os});
                 o_clicks = aux;
             } catch (EmptyResultDataAccessException e) {
                 query = "INSERT INTO os_stat(seq, date, os, clicks) VALUES(?, ?, ?, ?)";
-                jdbcTemplate.update(query, new Object[]{sequence, nowDate, os.toLowerCase(), 1});
+                jdbcTemplate.update(query, new Object[]{sequence, nowDate, os, 1});
                 o_clicks = 1;
             }
-            return new ImmutablePair<Integer, Integer>(o_clicks, b_clicks);
+            return new ImmutablePair<>(o_clicks, b_clicks);
         } else {
             return null;
         }
@@ -210,7 +213,7 @@ public class DatabaseApi {
     /**
      * Check if the sequence got add
      *
-     * @param sequence
+     * @param sequence sequence
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
@@ -258,7 +261,7 @@ public class DatabaseApi {
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
-                return new ArrayList<ClickStat>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
+                return new ArrayList<>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
             } else {
                 throw new DatabaseInternalException(parameter + " not supported");
             }
@@ -293,12 +296,12 @@ public class DatabaseApi {
                                     "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
                                     "ORDER BY SUM " + sortType +
                                     " LIMIT ?";
-                    ArrayList<AuxClickStat> aux = new ArrayList<AuxClickStat>(jdbcTemplate.query(query, new Object[]{sequence, 
+                    ArrayList<ClickStatDB> aux = new ArrayList<ClickStatDB>(jdbcTemplate.query(query, new Object[]{sequence,
                                                                                 sequence, 
                                                                                 startDate,
                                                                                 endDate,
                                                                                 maxAmountOfDataToRetrieve}, 
-                                                                            new AuxClickStatRowMapper()));
+                                                                            new ClickStatDBRowMapper()));
                     return formatDailyStats(aux);
                 } else {
                     throw new DatabaseInternalException(sortType + " not supported");

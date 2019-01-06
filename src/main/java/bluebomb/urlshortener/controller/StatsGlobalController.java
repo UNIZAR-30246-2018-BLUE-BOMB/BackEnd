@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.StatsGlobalException;
 import bluebomb.urlshortener.errors.WSApiError;

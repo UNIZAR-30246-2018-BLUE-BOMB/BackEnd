@@ -1,6 +1,6 @@
 package bluebomb.urlshortener.controller;
 
-import bluebomb.urlshortener.database.DatabaseApi;
+import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.errors.WSApiError;
 import bluebomb.urlshortener.model.ShortenedInfo;
@@ -133,7 +133,7 @@ public class InfoEndpointTest {
                 assertEquals(2, messagesCaptured.size());
 
                 assertEquals("", messagesCaptured.get(0).getHeadURL());
-                assertEquals(backEndURI + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
+                assertEquals(backEndURI + "/" + shortenedSequence + "/ads", messagesCaptured.get(0).getInterstitialURL());
                 assertEquals(secondsToRedirect, messagesCaptured.get(0).getSecondsToRedirect());
 
                 assertEquals("", messagesCaptured.get(1).getInterstitialURL());

@@ -25,14 +25,14 @@ public class DatabaseApi {
     JdbcTemplate jdbcTemplate;
 
     private String toSequence(int input) {
-        int aux_value;
+        int auxVal;
         StringBuilder bld = new StringBuilder();
         while(input > 0) {
-            aux_value = 87 + (input - 1) % 36;
-            if(aux_value >=87 && aux_value <= 96) {
-                bld.append((char) (aux_value - 39));
+            auxVal = 87 + (input - 1) % 36;
+            if(auxVal >=87 && auxVal <= 96) {
+                bld.append((char) (auxVal - 39));
             } else {
-                bld.append((char) aux_value);
+                bld.append((char) auxVal);
             }
             input = input / 62;
         }
@@ -85,7 +85,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, -1);
+        return createShortURL(headURL, interstitialURL, 10);
     }
 
     /**
@@ -99,22 +99,25 @@ public class DatabaseApi {
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect)
             throws DatabaseInternalException {
-        String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
         try {
-            return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
-        } catch (EmptyResultDataAccessException e){
-            query = "insert into short_url(url, redirect, time) values (?, ?, ?)";
-            jdbcTemplate.update(query, new Object[]{headURL, interstitialURL, secondsToRedirect});
+            String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
+            try {
+                return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
+            } catch (EmptyResultDataAccessException e){
+                query = "insert into short_url(url, redirect, time) values (?, ?, ?)";
+                jdbcTemplate.update(query, new Object[]{headURL, interstitialURL, secondsToRedirect});
 
-            query = "SELECT id FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
-            int id = jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, Integer.class);
+                query = "SELECT id FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
+                int id = jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, Integer.class);
 
-            query = "UPDATE short_url set sequence = ? WHERE id = ?";
-            String sequence = toSequence(id);
-            jdbcTemplate.update(query, new Object[]{sequence, id});
-            return sequence;
-        } 
-
+                query = "UPDATE short_url set sequence = ? WHERE id = ?";
+                String sequence = toSequence(id);
+                jdbcTemplate.update(query, new Object[]{sequence, id});
+                return sequence;
+            } 
+        } catch (Exception e) {
+            throw new DatabaseInternalException("Db fail in method: createURL");
+        }
     }
 
     /**

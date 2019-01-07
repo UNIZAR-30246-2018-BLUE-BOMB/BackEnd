@@ -26,17 +26,17 @@ public class DatabaseApi {
 
     private String toSequence(int input) {
         int aux_value;
-        String sequence = "";
+        StringBuilder bld = new StringBuilder();
         while(input > 0) {
             aux_value = 87 + (input - 1) % 36;
             if(aux_value >=87 && aux_value <= 96) {
-                sequence = (char) (aux_value - 39) + sequence;
+                bld.append((char) (aux_value - 39));
             } else {
-                sequence = (char) aux_value + sequence;
+                bld.append((char) aux_value);
             }
             input = input / 62;
         }
-        return sequence;
+        return bld.toString();
     }
 
     private boolean isSupported(String input){
@@ -44,24 +44,24 @@ public class DatabaseApi {
     }
 
     private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
-        Date aux_date = null;
-        ArrayList<ClickStat> aux_stats = new ArrayList<ClickStat>();
-        ArrayList<Stats> retVal = new ArrayList<Stats>();
+        Date auxDate = null;
+        ArrayList<ClickStat> auxStats = new ArrayList<>();
+        ArrayList<Stats> retVal = new ArrayList<>();
         boolean first = true;
         for (ClickStatDB item : input) {
-            if(item.getDate().equals(aux_date)) {
-                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+            if(item.getDate().equals(auxDate)) {
+                auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
             } else {
                 if(!first) {
-                    retVal.add(new Stats(aux_date, aux_stats));
+                    retVal.add(new Stats(auxDate, auxStats));
                 }
-                aux_date = item.getDate();
-                aux_stats = new ArrayList<ClickStat>();
-                aux_stats.add(new ClickStat(item.getAgent(), item.getClicks()));
+                auxDate = item.getDate();
+                auxStats = new ArrayList<ClickStat>();
+                auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
                 first = false;
             }
         }
-        retVal.add(new Stats(aux_date, aux_stats));
+        retVal.add(new Stats(auxDate, auxStats));
         return retVal;
     }
     

@@ -29,40 +29,10 @@ public class DatabaseApi {
         String sequence = "";
         while(input > 0) {
             aux_value = 87 + (input - 1) % 36;
-            switch(aux_value) {
-                case 87:
-                    sequence = "0".concat(sequence);
-                    break;
-                case 88:
-                    sequence = "1".concat(sequence);
-                    break;
-                case 89:
-                    sequence = "2".concat(sequence);
-                    break;
-                case 90:
-                    sequence = "3".concat(sequence);
-                    break;
-                case 91:
-                    sequence = "4".concat(sequence);
-                    break;
-                case 92:
-                    sequence = "5".concat(sequence);
-                    break;
-                case 93:
-                    sequence = "6".concat(sequence);
-                    break;
-                case 94:
-                    sequence = "7".concat(sequence);
-                    break;
-                case 95:
-                    sequence = "8".concat(sequence);
-                    break;
-                case 96:
-                    sequence = "9".concat(sequence);
-                    break;
-                default:
-                    sequence = (char) aux_value + sequence;
-                    break;
+            if(aux_value >=87 && aux_value <= 96) {
+                sequence = (char) (aux_value - 39) + sequence;
+            } else {
+                sequence = (char) aux_value + sequence;
             }
             input = input / 62;
         }
@@ -75,7 +45,7 @@ public class DatabaseApi {
 
     private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
         Date aux_date = null;
-        ArrayList<ClickStat> aux_stats = null;
+        ArrayList<ClickStat> aux_stats = new ArrayList<ClickStat>();
         ArrayList<Stats> retVal = new ArrayList<Stats>();
         boolean first = true;
         for (ClickStatDB item : input) {

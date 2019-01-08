@@ -1,8 +1,10 @@
 package bluebomb.urlshortener.model;
 
+import java.util.Objects;
+
 public class ClickStat {
     private String agent;
-    private Integer clicks ;
+    private Integer clicks;
 
     public ClickStat() {
     }
@@ -29,11 +31,17 @@ public class ClickStat {
     }
 
     @Override
-    public String toString() {
-        return "ClickStat{" +
-                "agent='" + agent + '\'' +
-                ", clicks=" + clicks +
-                '}';
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ClickStat clickStat = (ClickStat) o;
+        return Objects.equals(agent, clickStat.agent) &&
+                Objects.equals(clicks, clickStat.clicks);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(agent, clicks);
     }
 }
 

@@ -1,6 +1,8 @@
 package bluebomb.urlshortener.model;
 
 
+import java.util.Objects;
+
 public class ShortResponse {
     private String sequence;
     private String shortedUrl;
@@ -192,5 +194,32 @@ public class ShortResponse {
 
     public void setAdsUrl(String adsUrl) {
         this.adsUrl = adsUrl;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ShortResponse that = (ShortResponse) o;
+        return Objects.equals(sequence, that.sequence) &&
+                Objects.equals(shortedUrl, that.shortedUrl) &&
+                Objects.equals(qrReferenceUrl, that.qrReferenceUrl) &&
+                Objects.equals(infoUrlRequestChannel, that.infoUrlRequestChannel) &&
+                Objects.equals(infoUrlListenChannel, that.infoUrlListenChannel) &&
+                Objects.equals(infoUrlErrorChannel, that.infoUrlErrorChannel) &&
+                Objects.equals(dailyStatsOperatingSystemUrl, that.dailyStatsOperatingSystemUrl) &&
+                Objects.equals(dailyStatsBrowserUrl, that.dailyStatsBrowserUrl) &&
+                Objects.equals(globalStatsRequestOperatingSystemChannel, that.globalStatsRequestOperatingSystemChannel) &&
+                Objects.equals(globalStatsRequestBrowserChannel, that.globalStatsRequestBrowserChannel) &&
+                Objects.equals(globalStatsListenChannel, that.globalStatsListenChannel) &&
+                Objects.equals(globalStatsErrorChannel, that.globalStatsErrorChannel) &&
+                Objects.equals(globalStatsOperatingSystemChangesListenChannel, that.globalStatsOperatingSystemChangesListenChannel) &&
+                Objects.equals(globalStatsBrowserChangesListenChannel, that.globalStatsBrowserChangesListenChannel) &&
+                Objects.equals(adsUrl, that.adsUrl);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sequence, shortedUrl, qrReferenceUrl, infoUrlRequestChannel, infoUrlListenChannel, infoUrlErrorChannel, dailyStatsOperatingSystemUrl, dailyStatsBrowserUrl, globalStatsRequestOperatingSystemChannel, globalStatsRequestBrowserChannel, globalStatsListenChannel, globalStatsErrorChannel, globalStatsOperatingSystemChangesListenChannel, globalStatsBrowserChangesListenChannel, adsUrl);
     }
 }

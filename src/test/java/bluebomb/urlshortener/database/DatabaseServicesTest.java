@@ -85,25 +85,6 @@ public class DatabaseServicesTest {
         assertEquals(databaseApi.toSequence(11), "a");
         assertEquals(databaseApi.toSequence(36), "z");
     }
-    
-    /*@Test
-    public void verifyCreateShortURL() throws DatabaseInternalException {
-        String regex = "([a-z0-9])+";
-        String sequence = databaseApi.createShortURL("shortURL1");
-        assertNull(databaseApi.getAd(sequence));
-        assertTrue(sequence.matches(regex));
-
-        sequence = databaseApi.createShortURL("shortURL2", "ad1");
-        assertNotNull(databaseApi.getAd(sequence));
-        assertTrue(sequence.matches(regex));
-
-        sequence = databaseApi.createShortURL("shortURL3", "ad2", 100);
-        assertNotNull(databaseApi.getAd(sequence));
-        assertTrue(sequence.matches(regex));
-
-        assertEquals(databaseApi.toSequence(10), "9");
-        assertEquals(databaseApi.toSequence(11), "a");
-    }*/
 
 
     // EXCEPTION TESTS

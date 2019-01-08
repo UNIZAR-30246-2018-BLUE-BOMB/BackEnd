@@ -27,9 +27,9 @@ public class DatabaseApi {
 
     private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
     private static final String NOT_SUPPORTED = " not supported";
-    public static final String DEFAULT_EMPTY_AD = "empty";
-    public static final Integer DEFAULT_NO_AD_TIMEOUT = -1;
-    public static final Integer DEFAULT_TIMEOUT = 10;
+    public final String DEFAULT_EMPTY_AD = "empty";
+    public final Integer DEFAULT_NO_AD_TIMEOUT = -1;
+    public final Integer DEFAULT_TIMEOUT = 10;
 
     public String toSequence(int input) {
         int auxVal;

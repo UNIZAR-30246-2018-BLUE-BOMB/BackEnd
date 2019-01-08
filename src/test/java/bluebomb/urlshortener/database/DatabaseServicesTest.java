@@ -2,6 +2,7 @@ package bluebomb.urlshortener.database;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -16,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.model.RedirectURL;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -27,16 +29,25 @@ public class DatabaseServicesTest {
     public static final String NOT_EXIST = "notexists";
 
     @Test
-    public void verifyShortUrlNoAdd() throws DatabaseInternalException{
+    public void verifygetAdd() throws DatabaseInternalException{
         String sequence = databaseApi.createShortURL("headURL");
         
         assertEquals(databaseApi.getHeadURL(sequence), "headURL");
         assertNull(databaseApi.getAd(sequence));
+
+        assertNull(databaseApi.getAd(NOT_EXIST));
+
+        sequence = databaseApi.createShortURL("shortenedURL", "ad_url");
+
+        RedirectURL red = new RedirectURL(10, "ad_url");
+        assertTrue(databaseApi.getAd(sequence) instanceof RedirectURL);
+        assertEquals(databaseApi.getAd(sequence), red);
     }
 
     @Test
     public void verifyHeadURL() throws DatabaseInternalException {
         assertNull(databaseApi.getHeadURL(NOT_EXIST));
+        assertEquals(databaseApi.getHeadURL("0"), "https://www.google.es/");
     }
 
     @Test
@@ -66,6 +77,27 @@ public class DatabaseServicesTest {
 
         stats = databaseApi.addStats(NOT_EXIST, "os", "browser");
         assertNull(stats);
+    }
+
+    @Test
+    public void verifyCreateShortURL() throws DatabaseInternalException {
+        String regex = "([a-z0-9])+";
+        String sequence = databaseApi.createShortURL("shortURL1");
+        assertNull(databaseApi.getAd(sequence));
+        assertTrue(sequence.matches(regex));
+
+        sequence = databaseApi.createShortURL("shortURL2", "ad1");
+        assertNotNull(databaseApi.getAd(sequence));
+        assertTrue(sequence.matches(regex));
+
+        sequence = databaseApi.createShortURL("shortURL3", "ad2", 100);
+        assertNotNull(databaseApi.getAd(sequence));
+        assertTrue(sequence.matches(regex));
+
+        for(int n = 10; n < 110; n++){
+            sequence = databaseApi.createShortURL("shortURL1");
+            assertTrue(sequence.matches(regex));
+        }
     }
 
 

@@ -6,9 +6,8 @@ import bluebomb.urlshortener.exceptions.QrGeneratorBadParametersException;
 import bluebomb.urlshortener.exceptions.QrGeneratorInternalException;
 import bluebomb.urlshortener.model.ShortResponse;
 import bluebomb.urlshortener.model.Size;
-
-import bluebomb.urlshortener.services.QRCodeGenerator;
 import bluebomb.urlshortener.services.AvailableURIChecker;
+import bluebomb.urlshortener.services.QRCodeGenerator;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +21,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RestController
 public class MainController {
 
+    private static final String EMPTY = "empty";
     /**
      * Front end base redirect page uri
      */
@@ -77,7 +77,7 @@ public class MainController {
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null) {
-            interstitialURL = "empty";
+            interstitialURL = EMPTY;
             secondsToRedirect = -1;
         } else if (secondsToRedirect == null) secondsToRedirect = 10;
 
@@ -90,9 +90,9 @@ public class MainController {
 
         availableURIChecker.registerURL(headURL);
 
-        if (!interstitialURL.equals("empty")) availableURIChecker.registerURL(interstitialURL);
+        if (!interstitialURL.equals(EMPTY)) availableURIChecker.registerURL(interstitialURL);
 
-        return new ShortResponse(sequence, interstitialURL.equals("empty"), frontEndRedirectURI, backEndURI, backEndWsURI);
+        return new ShortResponse(sequence, interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI);
     }
 
     /**
@@ -160,23 +160,7 @@ public class MainController {
         }
 
         // Check Error correction
-        ErrorCorrectionLevel errorCorrectionLevel;
-        switch (errorCorrection) {
-            case "L":
-                errorCorrectionLevel = ErrorCorrectionLevel.L;
-                break;
-            case "M":
-                errorCorrectionLevel = ErrorCorrectionLevel.M;
-                break;
-            case "Q":
-                errorCorrectionLevel = ErrorCorrectionLevel.Q;
-                break;
-            case "H":
-                errorCorrectionLevel = ErrorCorrectionLevel.H;
-                break;
-            default:
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error in error correction level");
-        }
+        ErrorCorrectionLevel errorCorrectionLevel = getErrorCorrectionLevel(errorCorrection);
 
         // Check response type
         QRCodeGenerator.ResponseType responseType;
@@ -199,6 +183,27 @@ public class MainController {
             // Something went wrong in QR generation
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong in QR generation");
         }
+    }
+
+    private ErrorCorrectionLevel getErrorCorrectionLevel(String errorCorrection) {
+        ErrorCorrectionLevel errorCorrectionLevel;
+        switch (errorCorrection) {
+            case "L":
+                errorCorrectionLevel = ErrorCorrectionLevel.L;
+                break;
+            case "M":
+                errorCorrectionLevel = ErrorCorrectionLevel.M;
+                break;
+            case "Q":
+                errorCorrectionLevel = ErrorCorrectionLevel.Q;
+                break;
+            case "H":
+                errorCorrectionLevel = ErrorCorrectionLevel.H;
+                break;
+            default:
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Error in error correction level");
+        }
+        return errorCorrectionLevel;
     }
 
     /**

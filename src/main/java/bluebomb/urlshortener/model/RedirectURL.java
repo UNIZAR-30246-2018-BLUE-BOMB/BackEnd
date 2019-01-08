@@ -36,6 +36,11 @@ public class RedirectURL {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(secondsToRedirect, interstitialURL);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (o == this)
             return true;

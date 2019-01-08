@@ -26,6 +26,9 @@ public class DatabaseApi {
 
     private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
     private static final String NOT_SUPPORTED = " not supported";
+    public static final String DEFAULT_EMPTY_AD = "empty";
+    public static final Integer DEFAULT_NO_AD_TIMEOUT = -1;
+    public static final Integer DEFAULT_TIMEOUT = 10;
 
     public String toSequence(int input) {
         int auxVal;
@@ -76,7 +79,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL) throws DatabaseInternalException {
-        return createShortURL(headURL, "empty", -1);
+        return createShortURL(headURL, DEFAULT_EMPTY_AD, DEFAULT_NO_AD_TIMEOUT);
     }
 
     /**
@@ -88,7 +91,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, 10);
+        return createShortURL(headURL, interstitialURL, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -218,7 +221,7 @@ public class DatabaseApi {
          if(containsSequence(sequence)) {
             String query = "SELECT redirect FROM short_url WHERE sequence = ?";
             String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
-            if(!interstitialURL.equals("empty")){
+            if(!interstitialURL.equals(DEFAULT_EMPTY_AD)){
                 query = "SELECT time FROM short_url WHERE sequence = ?";
                 int secondsToRedirect = jdbcTemplate.queryForObject(query, new Object[]{sequence}, Integer.class);
                 return new RedirectURL(secondsToRedirect, interstitialURL);

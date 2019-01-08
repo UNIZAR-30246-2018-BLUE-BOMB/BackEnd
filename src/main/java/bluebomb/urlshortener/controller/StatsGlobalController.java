@@ -80,7 +80,6 @@ public class StatsGlobalController {
      * @param parameter parameter from which statistics will be obtained
      * @return actual global stats
      */
-    @SuppressWarnings("unused")
     @MessageMapping("/stats/global/{parameter}")
     @SendToUser("/stats/global")
     public GlobalStats getGlobalStats(String sequence,
@@ -104,7 +103,6 @@ public class StatsGlobalController {
      *
      * @param e exception captured
      */
-    @SuppressWarnings("unused")
     @MessageExceptionHandler({StatsGlobalException.class, DatabaseInternalException.class})
     public void errorHandlerGetGlobalStats(Exception e) {
         if (e instanceof StatsGlobalException) {

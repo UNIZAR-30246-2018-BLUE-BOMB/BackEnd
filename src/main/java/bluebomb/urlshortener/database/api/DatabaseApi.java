@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public class DatabaseApi {
@@ -257,10 +258,10 @@ public class DatabaseApi {
      *
      * @param sequence  sequence
      * @param parameter parameter (available values: os, browser)
-     * @return sequence global stats filter by parameter or null if sequence non exist
+     * @return sequence global stats filter by parameter or empty collection if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */
-    public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
+    public List<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
         if(sequence == null || parameter == null){
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getGlobalStats");
@@ -268,12 +269,12 @@ public class DatabaseApi {
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
-                return new ArrayList<>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
+                return jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper());
             } else {
                 throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return null;
+            return new ArrayList<ClickStat>();
         }
     }
 
@@ -289,7 +290,7 @@ public class DatabaseApi {
      * @return stats associated with sequence filter by parameter or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */ 
-    public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
+    public List<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
         if(sequence == null || parameter == null || startDate == null 
                             || endDate == null || sortType == null 
@@ -322,7 +323,7 @@ public class DatabaseApi {
                 throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return null;
+            return new ArrayList<Stats>();
         }
     }
 }

@@ -274,7 +274,7 @@ public class DatabaseApi {
                 throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return new ArrayList<ClickStat>();
+            return new ArrayList<>();
         }
     }
 
@@ -323,7 +323,7 @@ public class DatabaseApi {
                 throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return new ArrayList<Stats>();
+            return new ArrayList<>();
         }
     }
 }

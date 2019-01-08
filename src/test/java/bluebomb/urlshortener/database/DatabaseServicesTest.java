@@ -78,6 +78,13 @@ public class DatabaseServicesTest {
         stats = databaseApi.addStats(NOT_EXIST, "os", "browser");
         assertNull(stats);
     }
+
+    @Test
+    public void verifySeqGen(){
+        assertEquals(databaseApi.toSequence(10), "9");
+        assertEquals(databaseApi.toSequence(11), "a");
+        assertEquals(databaseApi.toSequence(36), "z");
+    }
     
     /*@Test
     public void verifyCreateShortURL() throws DatabaseInternalException {

@@ -24,15 +24,17 @@ public class DatabaseApi {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
+    private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
+
     private String toSequence(int input) {
-        int aux_value;
+        int auxVal;
         StringBuilder bld = new StringBuilder();
         while(input > 0) {
-            aux_value = 87 + (input - 1) % 36;
-            if(aux_value >=87 && aux_value <= 96) {
-                bld.append((char) (aux_value - 39));
+            auxVal = 87 + (input - 1) % 36;
+            if(auxVal >=87 && auxVal <= 96) {
+                bld.append((char) (auxVal - 39));
             } else {
-                bld.append((char) aux_value);
+                bld.append((char) auxVal);
             }
             input = input / 62;
         }
@@ -85,7 +87,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, -1);
+        return createShortURL(headURL, interstitialURL, 10);
     }
 
     /**
@@ -99,6 +101,14 @@ public class DatabaseApi {
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect)
             throws DatabaseInternalException {
+        try {
+            return createNewShortURL(headURL, interstitialURL, secondsToRedirect);
+        } catch (Exception e) {
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "createURL");
+        }
+    }
+
+    private String createNewShortURL(@NotNull String headURL, String interstitialURL, Integer secondsToRedirect) {
         String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
         try {
             return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
@@ -113,8 +123,7 @@ public class DatabaseApi {
             String sequence = toSequence(id);
             jdbcTemplate.update(query, new Object[]{sequence, id});
             return sequence;
-        } 
-
+        }
     }
 
     /**
@@ -126,6 +135,9 @@ public class DatabaseApi {
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
         String query = "SELECT id FROM short_url WHERE sequence = ?";
+        if(sequence == null) {
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "containsSequence");
+        }
         try {
             jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
             return true;
@@ -145,38 +157,50 @@ public class DatabaseApi {
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)
             throws DatabaseInternalException {
+        if(sequence == null || os == null || browser == null) {
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "addStats");
+        }
         if(containsSequence(sequence)) {
-            int b_clicks = -1, o_clicks = -1, aux;
-            String query = "";
             java.sql.Date nowDate = new java.sql.Date(new Date().getTime());
-            try {
-                query = "SELECT clicks FROM browser_stat WHERE seq = ? AND date = ? AND browser = ?";
-                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser}, Integer.class);
-
-                query = "UPDATE browser_stat SET clicks = ? WHERE seq = ? AND date = ? AND browser = ?";
-                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser});
-                b_clicks = aux;
-            } catch (EmptyResultDataAccessException e) {
-                query = "INSERT INTO browser_stat(seq, date, browser, clicks) VALUES(?, ?, ?, ?)";
-                jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser, 1});
-                b_clicks = 1;
-            }
-
-            try {
-                query = "SELECT clicks FROM os_stat WHERE seq = ? AND date = ? AND os = ?";
-                aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os}, Integer.class);
-
-                query = "UPDATE os_stat SET clicks = ? WHERE seq = ? AND date = ? AND os = ?";
-                jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os});
-                o_clicks = aux;
-            } catch (EmptyResultDataAccessException e) {
-                query = "INSERT INTO os_stat(seq, date, os, clicks) VALUES(?, ?, ?, ?)";
-                jdbcTemplate.update(query, new Object[]{sequence, nowDate, os, 1});
-                o_clicks = 1;
-            }
-            return new ImmutablePair<>(o_clicks, b_clicks);
+            int browserClicks = updateBrowserClicks(sequence, browser, nowDate);
+            int osClicks = updateOsClicks(sequence, os, nowDate);
+            return new ImmutablePair<>(osClicks, browserClicks);
         } else {
             return null;
+        }
+    }
+
+    private int updateBrowserClicks(@NotNull String sequence, @NotNull String browser, java.sql.Date nowDate) {
+        String query;
+        Integer aux;
+        try {
+            query = "SELECT clicks FROM browser_stat WHERE seq = ? AND date = ? AND browser = ?";
+            aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, browser}, Integer.class);
+
+            query = "UPDATE browser_stat SET clicks = ? WHERE seq = ? AND date = ? AND browser = ?";
+            jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, browser});
+            return aux;
+        } catch (EmptyResultDataAccessException e) {
+            query = "INSERT INTO browser_stat(seq, date, browser, clicks) VALUES(?, ?, ?, ?)";
+            jdbcTemplate.update(query, new Object[]{sequence, nowDate, browser, 1});
+            return 1;
+        }
+    }
+
+    private int updateOsClicks(@NotNull String sequence, @NotNull String os, java.sql.Date nowDate) {
+        String query;
+        Integer aux;
+        try {
+            query = "SELECT clicks FROM os_stat WHERE seq = ? AND date = ? AND os = ?";
+            aux = jdbcTemplate.queryForObject(query, new Object[]{sequence, nowDate, os}, Integer.class);
+
+            query = "UPDATE os_stat SET clicks = ? WHERE seq = ? AND date = ? AND os = ?";
+            jdbcTemplate.update(query, new Object[]{++aux, sequence, nowDate, os});
+            return aux;
+        } catch (EmptyResultDataAccessException e) {
+            query = "INSERT INTO os_stat(seq, date, os, clicks) VALUES(?, ?, ?, ?)";
+            jdbcTemplate.update(query, new Object[]{sequence, nowDate, os, 1});
+            return 1;
         }
     }
 
@@ -187,7 +211,10 @@ public class DatabaseApi {
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
-        if(containsSequence(sequence)) {
+        if(sequence == null){
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getAd");
+        }
+         if(containsSequence(sequence)) {
             String query = "SELECT redirect FROM short_url WHERE sequence = ?";
             String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
             if(!interstitialURL.equals("empty")){
@@ -210,6 +237,9 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String getHeadURL(@NotNull String sequence) throws DatabaseInternalException {
+        if(sequence == null){
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getHeadURL");
+        }
         if(containsSequence(sequence)) {
             String query = "SELECT url FROM short_url WHERE sequence = ?";
             return jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
@@ -228,6 +258,9 @@ public class DatabaseApi {
      */
     public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
+        if(sequence == null || parameter == null){
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getGlobalStats");
+        }
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
@@ -254,6 +287,11 @@ public class DatabaseApi {
      */ 
     public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
+        if(sequence == null || parameter == null || startDate == null 
+                            || endDate == null || sortType == null 
+                            || maxAmountOfDataToRetrieve == null){
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getDailyStats");
+        } 
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {

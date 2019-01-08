@@ -25,8 +25,9 @@ public class DatabaseApi {
     JdbcTemplate jdbcTemplate;
 
     private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
+    private static final String NOT_SUPPORTED = " not supported";
 
-    private String toSequence(int input) {
+    public String toSequence(int input) {
         int auxVal;
         StringBuilder bld = new StringBuilder();
         while(input > 0) {
@@ -42,7 +43,7 @@ public class DatabaseApi {
     }
 
     private boolean isSupported(String input){
-        return input.equals("os") || input.equals("browser");
+        return input.equalsIgnoreCase("os") || input.equalsIgnoreCase("browser");
     }
 
     private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
@@ -58,7 +59,7 @@ public class DatabaseApi {
                     retVal.add(new Stats(auxDate, auxStats));
                 }
                 auxDate = item.getDate();
-                auxStats = new ArrayList<ClickStat>();
+                auxStats = new ArrayList<>();
                 auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
                 first = false;
             }
@@ -266,7 +267,7 @@ public class DatabaseApi {
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
                 return new ArrayList<>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
             } else {
-                throw new DatabaseInternalException(parameter + " not supported");
+                throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
             return null;
@@ -294,7 +295,7 @@ public class DatabaseApi {
         } 
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
-                if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {
+                if(sortType.equalsIgnoreCase("asc") || sortType.equalsIgnoreCase("desc")) {
                     String query = "SELECT o.date, o." + parameter + " AS item, o.clicks, (SELECT SUM(clicks) " +
                                                                     "FROM " + parameter + "_stat o2 " + 
                                                                     "WHERE o2.seq = ? AND o2.date = o.date " + 
@@ -312,10 +313,10 @@ public class DatabaseApi {
                                                                             new ClickStatDBRowMapper()));
                     return formatDailyStats(aux);
                 } else {
-                    throw new DatabaseInternalException(sortType + " not supported");
+                    throw new DatabaseInternalException(sortType + NOT_SUPPORTED);
                 }
             } else {
-                throw new DatabaseInternalException(parameter + " not supported");
+                throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
             return null;

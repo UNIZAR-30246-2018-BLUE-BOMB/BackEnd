@@ -1,5 +1,7 @@
 package bluebomb.urlshortener.model;
 
+import java.util.Objects;
+
 public class RedirectURL {
     private Integer secondsToRedirect;
     private String interstitialURL;
@@ -31,6 +33,22 @@ public class RedirectURL {
                 "secondsToRedirect=" + secondsToRedirect +
                 ", interstitialURL='" + interstitialURL + '\'' +
                 '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(secondsToRedirect, interstitialURL);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof RedirectURL)) {
+            return false;
+        }
+        RedirectURL redirectURL = (RedirectURL) o;
+        return Objects.equals(secondsToRedirect, redirectURL.secondsToRedirect) && Objects.equals(interstitialURL, redirectURL.interstitialURL);
     }
 }
 

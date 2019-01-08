@@ -40,6 +40,9 @@ public class MainController {
     @Value("${app.back-end-ws-uri:}")
     private String backEndWsURI;
 
+    /**
+     * Database methods
+     */
     @Autowired
     DatabaseApi databaseApi;
 
@@ -74,9 +77,9 @@ public class MainController {
 
         // Set a value on secondsToRedirect
         if (interstitialURL == null) {
-            interstitialURL = "empty";
-            secondsToRedirect = -1;
-        } else if (secondsToRedirect == null) secondsToRedirect = 10;
+            interstitialURL = databaseApi.DEFAULT_EMPTY_AD;
+            secondsToRedirect = databaseApi.DEFAULT_NO_AD_TIMEOUT;
+        } else if (secondsToRedirect == null) secondsToRedirect = databaseApi.DEFAULT_TIMEOUT;
 
         String sequence;
         try {
@@ -87,9 +90,9 @@ public class MainController {
 
         availableURIChecker.registerURL(headURL);
 
-        if (!interstitialURL.equals("empty")) availableURIChecker.registerURL(interstitialURL);
+        if (!interstitialURL.equals(databaseApi.DEFAULT_EMPTY_AD)) availableURIChecker.registerURL(interstitialURL);
 
-        return new ShortResponse(sequence, interstitialURL.equals("empty"), frontEndRedirectURI, backEndURI, backEndWsURI);
+        return new ShortResponse(sequence, interstitialURL.equals(databaseApi.DEFAULT_EMPTY_AD), frontEndRedirectURI, backEndURI, backEndWsURI);
     }
 
     /**

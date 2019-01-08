@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public class DatabaseApi {
@@ -25,8 +26,12 @@ public class DatabaseApi {
     JdbcTemplate jdbcTemplate;
 
     private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
+    private static final String NOT_SUPPORTED = " not supported";
+    public final String DEFAULT_EMPTY_AD = "empty";
+    public final Integer DEFAULT_NO_AD_TIMEOUT = -1;
+    public final Integer DEFAULT_TIMEOUT = 10;
 
-    private String toSequence(int input) {
+    public String toSequence(int input) {
         int auxVal;
         StringBuilder bld = new StringBuilder();
         while(input > 0) {
@@ -42,7 +47,7 @@ public class DatabaseApi {
     }
 
     private boolean isSupported(String input){
-        return input.equals("os") || input.equals("browser");
+        return input.equalsIgnoreCase("os") || input.equalsIgnoreCase("browser");
     }
 
     private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
@@ -58,7 +63,7 @@ public class DatabaseApi {
                     retVal.add(new Stats(auxDate, auxStats));
                 }
                 auxDate = item.getDate();
-                auxStats = new ArrayList<ClickStat>();
+                auxStats = new ArrayList<>();
                 auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
                 first = false;
             }
@@ -75,7 +80,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL) throws DatabaseInternalException {
-        return createShortURL(headURL, "empty", -1);
+        return createShortURL(headURL, DEFAULT_EMPTY_AD, DEFAULT_NO_AD_TIMEOUT);
     }
 
     /**
@@ -87,7 +92,7 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String createShortURL(@NotNull String headURL, String interstitialURL) throws DatabaseInternalException {
-        return createShortURL(headURL, interstitialURL, 10);
+        return createShortURL(headURL, interstitialURL, DEFAULT_TIMEOUT);
     }
 
     /**
@@ -217,7 +222,7 @@ public class DatabaseApi {
          if(containsSequence(sequence)) {
             String query = "SELECT redirect FROM short_url WHERE sequence = ?";
             String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
-            if(!interstitialURL.equals("empty")){
+            if(!interstitialURL.equals(DEFAULT_EMPTY_AD)){
                 query = "SELECT time FROM short_url WHERE sequence = ?";
                 int secondsToRedirect = jdbcTemplate.queryForObject(query, new Object[]{sequence}, Integer.class);
                 return new RedirectURL(secondsToRedirect, interstitialURL);
@@ -253,10 +258,10 @@ public class DatabaseApi {
      *
      * @param sequence  sequence
      * @param parameter parameter (available values: os, browser)
-     * @return sequence global stats filter by parameter or null if sequence non exist
+     * @return sequence global stats filter by parameter or empty collection if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */
-    public ArrayList<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
+    public List<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
         if(sequence == null || parameter == null){
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getGlobalStats");
@@ -264,12 +269,12 @@ public class DatabaseApi {
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
-                return new ArrayList<>(jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper()));
+                return jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper());
             } else {
-                throw new DatabaseInternalException(parameter + " not supported");
+                throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return null;
+            return new ArrayList<>();
         }
     }
 
@@ -285,7 +290,7 @@ public class DatabaseApi {
      * @return stats associated with sequence filter by parameter or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
      */ 
-    public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
+    public List<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
         if(sequence == null || parameter == null || startDate == null 
                             || endDate == null || sortType == null 
@@ -294,7 +299,7 @@ public class DatabaseApi {
         } 
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
-                if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {
+                if(sortType.equalsIgnoreCase("asc") || sortType.equalsIgnoreCase("desc")) {
                     String query = "SELECT o.date, o." + parameter + " AS item, o.clicks, (SELECT SUM(clicks) " +
                                                                     "FROM " + parameter + "_stat o2 " + 
                                                                     "WHERE o2.seq = ? AND o2.date = o.date " + 
@@ -312,13 +317,13 @@ public class DatabaseApi {
                                                                             new ClickStatDBRowMapper()));
                     return formatDailyStats(aux);
                 } else {
-                    throw new DatabaseInternalException(sortType + " not supported");
+                    throw new DatabaseInternalException(sortType + NOT_SUPPORTED);
                 }
             } else {
-                throw new DatabaseInternalException(parameter + " not supported");
+                throw new DatabaseInternalException(parameter + NOT_SUPPORTED);
             }
         } else {
-            return null;
+            return new ArrayList<>();
         }
     }
 }

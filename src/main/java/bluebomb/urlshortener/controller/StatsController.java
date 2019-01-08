@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 @RestController
@@ -42,7 +43,7 @@ public class StatsController {
      */
     @CrossOrigin
     @RequestMapping(value = "/{sequence}/stats/daily", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ArrayList<Stats> getStatsDaily(@PathVariable(value = "sequence") String sequence,
+    public List<Stats> getStatsDaily(@PathVariable(value = "sequence") String sequence,
                                           @RequestParam(value = "parameter") String parameter,
                                           @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                                           @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,

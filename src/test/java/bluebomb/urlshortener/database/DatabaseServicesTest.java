@@ -78,7 +78,7 @@ public class DatabaseServicesTest {
         stats = databaseApi.addStats(NOT_EXIST, "os", "browser");
         assertNull(stats);
     }
-
+    /*
     @Test
     public void verifyCreateShortURL() throws DatabaseInternalException {
         String regex = "([a-z0-9])+";
@@ -98,7 +98,7 @@ public class DatabaseServicesTest {
             sequence = databaseApi.createShortURL("shortURL1");
             assertTrue(sequence.matches(regex));
         }
-    }
+    }*/
 
 
     // EXCEPTION TESTS

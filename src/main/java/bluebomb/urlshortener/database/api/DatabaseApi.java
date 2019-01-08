@@ -27,9 +27,9 @@ public class DatabaseApi {
 
     private static final String DB_EXCEPTION_MESSAGE = "DB failed at method: ";
     private static final String NOT_SUPPORTED = " not supported";
-    public final String DEFAULT_EMPTY_AD = "empty";
-    public final Integer DEFAULT_NO_AD_TIMEOUT = -1;
-    public final Integer DEFAULT_TIMEOUT = 10;
+    public static final String DEFAULT_EMPTY_AD = "empty";
+    public static final Integer DEFAULT_NO_AD_TIMEOUT = -1;
+    public static final Integer DEFAULT_TIMEOUT = 10;
 
     public String toSequence(int input) {
         int auxVal;
@@ -50,7 +50,7 @@ public class DatabaseApi {
         return input.equalsIgnoreCase("os") || input.equalsIgnoreCase("browser");
     }
 
-    private ArrayList<Stats> formatDailyStats(ArrayList<ClickStatDB> input){
+    private List<Stats> formatDailyStats(List<ClickStatDB> input){
         Date auxDate = null;
         ArrayList<ClickStat> auxStats = new ArrayList<>();
         ArrayList<Stats> retVal = new ArrayList<>();
@@ -309,12 +309,12 @@ public class DatabaseApi {
                                     "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
                                     "ORDER BY SUM " + sortType +
                                     " LIMIT ?";
-                    ArrayList<ClickStatDB> aux = new ArrayList<ClickStatDB>(jdbcTemplate.query(query, new Object[]{sequence,
+                    List<ClickStatDB> aux = jdbcTemplate.query(query, new Object[]{sequence,
                                                                                 sequence, 
                                                                                 startDate,
                                                                                 endDate,
                                                                                 maxAmountOfDataToRetrieve}, 
-                                                                            new ClickStatDBRowMapper()));
+                                                                            new ClickStatDBRowMapper());
                     return formatDailyStats(aux);
                 } else {
                     throw new DatabaseInternalException(sortType + NOT_SUPPORTED);

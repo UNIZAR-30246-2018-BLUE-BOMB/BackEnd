@@ -5,6 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
+
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +24,8 @@ public class DatabaseServicesTest {
     @Autowired
     DatabaseApi databaseApi;
 
+    public static final String NOT_EXIST = "notexists";
+
     @Test
     public void verifyShortUrlNoAdd() throws DatabaseInternalException{
         String sequence = databaseApi.createShortURL("headURL");
@@ -31,9 +35,14 @@ public class DatabaseServicesTest {
     }
 
     @Test
+    public void verifyHeadURL() throws DatabaseInternalException {
+        assertNull(databaseApi.getHeadURL(NOT_EXIST));
+    }
+
+    @Test
     public void verifyContainsSequenceTest() throws DatabaseInternalException {
         assertTrue(databaseApi.containsSequence("0"));
-        assertFalse(databaseApi.containsSequence("notsequence"));
+        assertFalse(databaseApi.containsSequence(NOT_EXIST));
     }
 
     @Test
@@ -54,6 +63,9 @@ public class DatabaseServicesTest {
 
         assertEquals((int) stats.left, 1);
         assertEquals((int) stats.right, 2);
+
+        stats = databaseApi.addStats(NOT_EXIST, "os", "browser");
+        assertNull(stats);
     }
 
 
@@ -116,6 +128,48 @@ public class DatabaseServicesTest {
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetGlobalStatsNotSupported() throws DatabaseInternalException {
-        databaseApi.getGlobalStats("0", "notSupported");
+        databaseApi.getGlobalStats("0", NOT_EXIST);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStatsNotSupported() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
+                                NOT_EXIST, 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats() throws DatabaseInternalException {
+        databaseApi.getDailyStats(null, "string", new Date(), new Date(), 
+                                "asc", 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats2() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", null, new Date(), new Date(), 
+                                "asc", 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats3() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "string", null, new Date(), 
+                                "asc", 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats4() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "string", new Date(), null, 
+                                "asc", 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats5() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
+                                null, 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStats6() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
+                                "asc", null);
     }
 }

@@ -287,6 +287,11 @@ public class DatabaseApi {
      */ 
     public ArrayList<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
                                           Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
+        if(sequence == null || parameter == null || startDate == null 
+                            || endDate == null || sortType == null 
+                            || maxAmountOfDataToRetrieve == null){
+            throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getDailyStats");
+        } 
         if(containsSequence(sequence)) {
             if(isSupported(parameter)){
                 if(sortType.toLowerCase().equals("asc") || sortType.toLowerCase().equals("desc")) {

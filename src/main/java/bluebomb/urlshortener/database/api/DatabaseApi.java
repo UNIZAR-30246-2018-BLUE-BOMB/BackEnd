@@ -15,9 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Repository
 public class DatabaseApi {
@@ -34,9 +32,9 @@ public class DatabaseApi {
     public String toSequence(int input) {
         int auxVal;
         StringBuilder bld = new StringBuilder();
-        while(input > 0) {
+        while (input > 0) {
             auxVal = 87 + (input - 1) % 36;
-            if(auxVal >=87 && auxVal <= 96) {
+            if (auxVal >= 87 && auxVal <= 96) {
                 bld.append((char) (auxVal - 39));
             } else {
                 bld.append((char) auxVal);
@@ -46,32 +44,40 @@ public class DatabaseApi {
         return bld.toString();
     }
 
-    private boolean isSupported(String input){
+    private boolean isSupported(String input) {
         return input.equalsIgnoreCase("os") || input.equalsIgnoreCase("browser");
     }
 
-    private List<Stats> formatDailyStats(List<ClickStatDB> input){
-        Date auxDate = null;
-        ArrayList<ClickStat> auxStats = new ArrayList<>();
-        ArrayList<Stats> retVal = new ArrayList<>();
-        boolean first = true;
-        for (ClickStatDB item : input) {
-            if(item.getDate().equals(auxDate)) {
-                auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
-            } else {
-                if(!first) {
-                    retVal.add(new Stats(auxDate, auxStats));
-                }
-                auxDate = item.getDate();
-                auxStats = new ArrayList<>();
-                auxStats.add(new ClickStat(item.getAgent(), item.getClicks()));
-                first = false;
-            }
+    /**
+     * Map List<ClickStatDB> to List<Stats>
+     *
+     * @param input input
+     * @return List<Stats> representation of List<ClickStatDB>
+     */
+    private List<Stats> formatDailyStats(List<ClickStatDB> input) {
+        // If input is empty
+        if (input == null || input.size() == 0) {
+            return new ArrayList<>();
         }
-        retVal.add(new Stats(auxDate, auxStats));
-        return retVal;
+
+        // Input values have been segmentated by parameter, so we don´t need to add parameter to the primary key
+        Map<Date, List<ClickStat>> tempReturnValues = new HashMap<>();
+
+        for (ClickStatDB item : input) {
+            if (!tempReturnValues.containsKey(item.getDate())) {
+                tempReturnValues.put(item.getDate(), new ArrayList<>());
+            }
+            ClickStat clickStat = new ClickStat(item.getAgent(), item.getClicks());
+            tempReturnValues.get(item.getDate()).add(clickStat);
+        }
+
+        ArrayList<Stats> toReturn = new ArrayList<>();
+        for (Map.Entry<Date, List<ClickStat>> item : tempReturnValues.entrySet()) {
+            toReturn.add(new Stats(item.getKey(), item.getValue()));
+        }
+        return toReturn;
     }
-    
+
     /**
      * Create a new Direct shortened URL without interstitialURL
      *
@@ -117,7 +123,7 @@ public class DatabaseApi {
         String query = "SELECT sequence FROM short_url WHERE url = ? AND redirect = ? AND time = ?";
         try {
             return jdbcTemplate.queryForObject(query, new Object[]{headURL, interstitialURL, secondsToRedirect}, String.class);
-        } catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             query = "insert into short_url(url, redirect, time) values (?, ?, ?)";
             jdbcTemplate.update(query, new Object[]{headURL, interstitialURL, secondsToRedirect});
 
@@ -140,13 +146,13 @@ public class DatabaseApi {
      */
     public boolean containsSequence(@NotNull String sequence) throws DatabaseInternalException {
         String query = "SELECT id FROM short_url WHERE sequence = ?";
-        if(sequence == null) {
+        if (sequence == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "containsSequence");
         }
         try {
             jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
             return true;
-        } catch (EmptyResultDataAccessException e){
+        } catch (EmptyResultDataAccessException e) {
             return false;
         }
     }
@@ -162,10 +168,10 @@ public class DatabaseApi {
      */
     public ImmutablePair<Integer, Integer> addStats(@NotNull String sequence, @NotNull String os, @NotNull String browser)
             throws DatabaseInternalException {
-        if(sequence == null || os == null || browser == null) {
+        if (sequence == null || os == null || browser == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "addStats");
         }
-        if(containsSequence(sequence)) {
+        if (containsSequence(sequence)) {
             java.sql.Date nowDate = new java.sql.Date(new Date().getTime());
             int browserClicks = updateBrowserClicks(sequence, browser, nowDate);
             int osClicks = updateOsClicks(sequence, os, nowDate);
@@ -216,13 +222,13 @@ public class DatabaseApi {
      * @return null if no ad or ad in the other case
      */
     public RedirectURL getAd(@NotNull String sequence) throws DatabaseInternalException {
-        if(sequence == null){
+        if (sequence == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getAd");
         }
-         if(containsSequence(sequence)) {
+        if (containsSequence(sequence)) {
             String query = "SELECT redirect FROM short_url WHERE sequence = ?";
             String interstitialURL = jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
-            if(!interstitialURL.equals(DEFAULT_EMPTY_AD)){
+            if (!interstitialURL.equals(DEFAULT_EMPTY_AD)) {
                 query = "SELECT time FROM short_url WHERE sequence = ?";
                 int secondsToRedirect = jdbcTemplate.queryForObject(query, new Object[]{sequence}, Integer.class);
                 return new RedirectURL(secondsToRedirect, interstitialURL);
@@ -242,10 +248,10 @@ public class DatabaseApi {
      * @throws DatabaseInternalException if database fails doing the operation
      */
     public String getHeadURL(@NotNull String sequence) throws DatabaseInternalException {
-        if(sequence == null){
+        if (sequence == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getHeadURL");
         }
-        if(containsSequence(sequence)) {
+        if (containsSequence(sequence)) {
             String query = "SELECT url FROM short_url WHERE sequence = ?";
             return jdbcTemplate.queryForObject(query, new Object[]{sequence}, String.class);
         } else {
@@ -263,11 +269,11 @@ public class DatabaseApi {
      */
     public List<ClickStat> getGlobalStats(@NotNull String sequence, @NotNull String parameter)
             throws DatabaseInternalException {
-        if(sequence == null || parameter == null){
+        if (sequence == null || parameter == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getGlobalStats");
         }
-        if(containsSequence(sequence)) {
-            if(isSupported(parameter)){
+        if (containsSequence(sequence)) {
+            if (isSupported(parameter)) {
                 String query = "SELECT " + parameter + " AS item, SUM(clicks) AS clicks FROM " + parameter + "_stat WHERE seq = ? GROUP BY seq, " + parameter;
                 return jdbcTemplate.query(query, new Object[]{sequence}, new ClickStatRowMapper());
             } else {
@@ -289,32 +295,32 @@ public class DatabaseApi {
      * @param maxAmountOfDataToRetrieve max amount of data to retrieve
      * @return stats associated with sequence filter by parameter or null if sequence non exist
      * @throws DatabaseInternalException if database fails doing the operation
-     */ 
+     */
     public List<Stats> getDailyStats(String sequence, String parameter, Date startDate, Date endDate, String sortType,
-                                          Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
-        if(sequence == null || parameter == null || startDate == null 
-                            || endDate == null || sortType == null 
-                            || maxAmountOfDataToRetrieve == null){
+                                     Integer maxAmountOfDataToRetrieve) throws DatabaseInternalException {
+        if (sequence == null || parameter == null || startDate == null
+                || endDate == null || sortType == null
+                || maxAmountOfDataToRetrieve == null) {
             throw new DatabaseInternalException(DB_EXCEPTION_MESSAGE + "getDailyStats");
-        } 
-        if(containsSequence(sequence)) {
-            if(isSupported(parameter)){
-                if(sortType.equalsIgnoreCase("asc") || sortType.equalsIgnoreCase("desc")) {
+        }
+        if (containsSequence(sequence)) {
+            if (isSupported(parameter)) {
+                if (sortType.equalsIgnoreCase("asc") || sortType.equalsIgnoreCase("desc")) {
                     String query = "SELECT o.date, o." + parameter + " AS item, o.clicks, (SELECT SUM(clicks) " +
-                                                                    "FROM " + parameter + "_stat o2 " + 
-                                                                    "WHERE o2.seq = ? AND o2.date = o.date " + 
-                                                                    "GROUP BY o2.date) AS SUM " +
-                                    "FROM " + parameter + "_stat o " + 
-                                    "WHERE o.seq = ? AND o.date BETWEEN ? AND ? " +
-                                    "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
-                                    "ORDER BY SUM " + sortType +
-                                    " LIMIT ?";
+                            "FROM " + parameter + "_stat o2 " +
+                            "WHERE o2.seq = ? AND o2.date = o.date " +
+                            "GROUP BY o2.date) AS SUM " +
+                            "FROM " + parameter + "_stat o " +
+                            "WHERE o.seq = ? AND o.date BETWEEN ? AND ? " +
+                            "GROUP BY o.date, o." + parameter + ", o.clicks, o.seq " +
+                            "ORDER BY SUM " + sortType +
+                            " LIMIT ?";
                     List<ClickStatDB> aux = jdbcTemplate.query(query, new Object[]{sequence,
-                                                                                sequence, 
-                                                                                startDate,
-                                                                                endDate,
-                                                                                maxAmountOfDataToRetrieve}, 
-                                                                            new ClickStatDBRowMapper());
+                                    sequence,
+                                    startDate,
+                                    endDate,
+                                    maxAmountOfDataToRetrieve},
+                            new ClickStatDBRowMapper());
                     return formatDailyStats(aux);
                 } else {
                     throw new DatabaseInternalException(sortType + NOT_SUPPORTED);

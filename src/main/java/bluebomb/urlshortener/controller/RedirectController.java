@@ -3,6 +3,8 @@ package bluebomb.urlshortener.controller;
 import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
 import bluebomb.urlshortener.services.HTMLDownloader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,6 +16,10 @@ import bluebomb.urlshortener.services.AvailableURIChecker;
 
 @RestController
 public class RedirectController {
+    /**
+     * Logger instance
+     */
+    private static Logger logger = LoggerFactory.getLogger(RedirectController.class);
 
     /**
      * HTML downloader service
@@ -65,6 +71,7 @@ public class RedirectController {
     @ResponseStatus(value= HttpStatus.INTERNAL_SERVER_ERROR,
             reason="Internal server error")
     @ExceptionHandler({DatabaseInternalException.class, DownloadHTMLInternalException.class})
-    public void exceptionHandlerInternalServerError(){
+    public void exceptionHandlerInternalServerError(Exception e){
+        logger.error(e.getMessage());
     }
 }

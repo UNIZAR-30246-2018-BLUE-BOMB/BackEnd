@@ -2,10 +2,13 @@ package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 import bluebomb.urlshortener.services.UserAgentDetector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,11 @@ import java.util.List;
 
 @RestController
 public class StatsController {
+    /**
+     * Logger instance
+     */
+    private static Logger logger = LoggerFactory.getLogger(StatsController.class);
+
     /**
      * Uri checker service
      */
@@ -41,32 +49,48 @@ public class StatsController {
      * @return the stats of the shortened URL associated with sequence
      */
     @CrossOrigin
-    @RequestMapping(value = "/{sequence}/stats/daily", produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/{sequence}/stats/{parameter}/daily", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Stats> getStatsDaily(@PathVariable(value = "sequence") String sequence,
-                                          @RequestParam(value = "parameter") String parameter,
-                                          @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-                                          @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
-                                          @RequestParam(value = "sortType", required = false) String sortType,
-                                          @RequestParam(value = "maxAmountOfDataToRetrieve") Integer maxAmountOfDataToRetrieve) {
-        // Check sequence
-        try {
-            if (!databaseApi.containsSequence(sequence)) {
-                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Original URL is not available");
-            } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
+                                     @PathVariable(value = "parameter") String parameter,
+                                     @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+                                     @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
+                                     @RequestParam(value = "sortType", required = false, defaultValue = "asc") String sortType,
+                                     @RequestParam(value = "maxAmountOfDataToRetrieve") Integer maxAmountOfDataToRetrieve)
+            throws DatabaseInternalException {
 
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
-            }
-        } catch (DatabaseInternalException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when trying to check if QR exist");
+        // Check parameter
+        if (!(parameter.equals("os") || parameter.equals("browser"))) {
+            // Unavailable parameter
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unavailable parameter: " + parameter);
+        }
+
+        // Check sequence
+        if (!databaseApi.containsSequence(sequence)) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Sequence not exist");
+        } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
+        }
+
+        // Check maxAmountOfDataToRetrieve
+        if (maxAmountOfDataToRetrieve <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "maxAmountOfDataToRetrieve must be greater than 0");
+        }
+
+        // Check and set startDate and endDate
+        // If startDate is not setted, we set the older date that we can
+        if (startDate == null) startDate = new Date(0);
+
+        // If endDate is not setted, we set the newer date that we can
+        if (endDate == null) endDate = new Date();
+
+        if (endDate.compareTo(startDate) < 0) {
+            // endDate is before than startDate
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "endDate must be after than startDate");
         }
 
         // Get STATS
-        try {
-            return databaseApi.getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
+        return databaseApi.getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
 
-        } catch (DatabaseInternalException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when trying obtain Stats from DB");
-        }
     }
 
     /**
@@ -96,5 +120,12 @@ public class StatsController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The searched parameter is not available");
         }
         return statsAgents;
+    }
+
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR,
+            reason = "Internal server error")
+    @ExceptionHandler({DatabaseInternalException.class})
+    public void exceptionHandlerInternalServerError(Exception e) {
+        logger.error(e.getMessage());
     }
 }

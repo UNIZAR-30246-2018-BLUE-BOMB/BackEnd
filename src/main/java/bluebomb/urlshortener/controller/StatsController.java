@@ -49,9 +49,9 @@ public class StatsController {
      * @return the stats of the shortened URL associated with sequence
      */
     @CrossOrigin
-    @RequestMapping(value = "/{sequence}/stats/daily", produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/{sequence}/stats/{parameter}/daily", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Stats> getStatsDaily(@PathVariable(value = "sequence") String sequence,
-                                     @RequestParam(value = "parameter") String parameter,
+                                     @PathVariable(value = "parameter") String parameter,
                                      @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
                                      @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate,
                                      @RequestParam(value = "sortType", required = false, defaultValue = "asc") String sortType,

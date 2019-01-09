@@ -116,21 +116,29 @@ public class DatabaseServicesTest {
         assertEquals(2, dailyStats.size());
 
         List<ClickStat> clickStats = new ArrayList<>();
-        clickStats.add(new ClickStat("ubuntu", 50));
-        clickStats.add(new ClickStat("windows", 10));
+        ClickStat cs1 = new ClickStat("ubuntu", 50);
+        ClickStat cs2 = new ClickStat("windows", 10);
+        clickStats.add(cs1);
+        clickStats.add(cs2);
 
 
         Stats stats = new Stats(from, clickStats);
 
-        assertEquals(stats, dailyStats.get(0));
+        assertEquals(stats.getDay(), dailyStats.get(0).getDay());
+        assertTrue(dailyStats.get(0).getClickStat().contains(cs1));
+        assertTrue(dailyStats.get(0).getClickStat().contains(cs2));
 
         clickStats = new ArrayList<>();
-        clickStats.add(new ClickStat("windows", 30));
-        clickStats.add(new ClickStat("ubuntu", 26));
-
+        cs1 = new ClickStat("ubuntu", 26);
+        cs2 = new ClickStat("windows", 30);
+        clickStats.add(cs1);
+        clickStats.add(cs2);
 
         stats = new Stats(to, clickStats);
-        assertEquals(stats, dailyStats.get(1));
+
+        assertEquals(stats.getDay(), dailyStats.get(1).getDay());
+        assertTrue(dailyStats.get(1).getClickStat().contains(cs1));
+        assertTrue(dailyStats.get(1).getClickStat().contains(cs2));
     }
 
     // EXCEPTION TESTS

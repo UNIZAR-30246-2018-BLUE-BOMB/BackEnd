@@ -40,50 +40,25 @@ public class ShortResponseTest {
     public void verifyConstructor(){
         ShortResponse shortResponse = new ShortResponse("0", false, "frontEndRedirectURI", "backEndURI", "backEndWsURI");
 
-        String sequence = shortResponse.getSequence();
-        assertEquals("0", sequence);
-        String shortedUrl = shortResponse.getShortedUrl();
-        assertEquals("frontEndRedirectURI/0", shortedUrl);
-        String qrReferenceUrl = shortResponse.getQrReferenceUrl();
-        assertEquals("backEndURI/0/qr", qrReferenceUrl);
-        String infoUrlRequestChannel = shortResponse.getInfoUrlRequestChannel();
-        assertEquals("backEndWsURI/app/info", infoUrlRequestChannel);
-        String infoUrlListenChannel = shortResponse.getInfoUrlListenChannel();
-        assertEquals("backEndWsURI/user/info/0", infoUrlListenChannel);
-        String infoUrlErrorChannel = shortResponse.getInfoUrlErrorChannel();
-        assertEquals("backEndWsURI/user/queue/error/info", infoUrlErrorChannel);
-        String dailyStatsOperatingSystemUrl = shortResponse.getDailyStatsOperatingSystemUrl();
-        assertEquals("backEndURI/0/stats/os/daily", dailyStatsOperatingSystemUrl);
-        String dailyStatsBrowserUrl = shortResponse.getDailyStatsBrowserUrl();
-        assertEquals("backEndURI/0/stats/browser/daily", dailyStatsBrowserUrl);
-        String globalStatsRequestOperatingSystemChannel = shortResponse.getGlobalStatsRequestOperatingSystemChannel();
-        assertEquals("backEndWsURI/app/stats/global/os", globalStatsRequestOperatingSystemChannel);
-        String globalStatsRequestBrowserChannel = shortResponse.getGlobalStatsRequestBrowserChannel();
-        assertEquals("backEndWsURI/app/stats/global/browser", globalStatsRequestBrowserChannel);
-        String globalStatsListenChannel = shortResponse.getGlobalStatsListenChannel();
-        assertEquals("backEndWsURI/user/stats/global", globalStatsListenChannel);
-        String globalStatsErrorChannel = shortResponse.getGlobalStatsErrorChannel();
-        assertEquals("backEndWsURI/user/queue/error/stats/global", globalStatsErrorChannel);
-        String globalStatsOperatingSystemChangesListenChannel = shortResponse.getGlobalStatsOperatingSystemChangesListenChannel();
-        assertEquals("backEndWsURI/topic/stats/global/os/0", globalStatsOperatingSystemChangesListenChannel);
-        String globalStatsBrowserChangesListenChannel = shortResponse.getGlobalStatsBrowserChangesListenChannel();
-        assertEquals("backEndWsURI/topic/stats/global/browser/0", globalStatsBrowserChangesListenChannel);
-        String adsUrl = shortResponse.getAdsUrl();
-        assertEquals("", adsUrl);
+        assertEquals("0", shortResponse.getSequence());
+        assertEquals("frontEndRedirectURI/0", shortResponse.getShortedUrl());
+        assertEquals("backEndURI/0/qr", shortResponse.getQrReferenceUrl());
+        assertEquals("backEndWsURI/app/info", shortResponse.getInfoUrlRequestChannel());
+        assertEquals("backEndWsURI/user/info/0", shortResponse.getInfoUrlListenChannel());
+        assertEquals("backEndWsURI/user/queue/error/info", shortResponse.getInfoUrlErrorChannel());
+        assertEquals("backEndURI/0/stats/os/daily", shortResponse.getDailyStatsOperatingSystemUrl());
+        assertEquals("backEndURI/0/stats/browser/daily", shortResponse.getDailyStatsBrowserUrl());
+        assertEquals("backEndWsURI/app/stats/global/os", shortResponse.getGlobalStatsRequestOperatingSystemChannel());
+        assertEquals("backEndWsURI/app/stats/global/browser", shortResponse.getGlobalStatsRequestBrowserChannel());
+        assertEquals("backEndWsURI/user/stats/global", shortResponse.getGlobalStatsListenChannel());
+        assertEquals("backEndWsURI/user/queue/error/stats/global", shortResponse.getGlobalStatsErrorChannel());
+        assertEquals("backEndWsURI/topic/stats/global/os/0", shortResponse.getGlobalStatsOperatingSystemChangesListenChannel());
+        assertEquals("backEndWsURI/topic/stats/global/browser/0", shortResponse.getGlobalStatsBrowserChangesListenChannel());
+        assertEquals("", shortResponse.getAdsUrl());
 
         shortResponse = new ShortResponse("0", true, "frontEndRedirectURI", "backEndURI", "backEndWsURI");
-        adsUrl = shortResponse.getAdsUrl();
-        assertEquals("backEndURI/" + sequence + "/ads", adsUrl);
+        assertEquals("backEndURI/0/ads", shortResponse.getAdsUrl());
 
-
-
-        ShortResponse shortResponse1 = new ShortResponse(sequence, shortedUrl, qrReferenceUrl, infoUrlRequestChannel,
-                infoUrlListenChannel, infoUrlErrorChannel, dailyStatsOperatingSystemUrl,
-                dailyStatsBrowserUrl, globalStatsRequestOperatingSystemChannel,
-                globalStatsRequestBrowserChannel, globalStatsListenChannel,
-                globalStatsErrorChannel, globalStatsOperatingSystemChangesListenChannel,
-                globalStatsBrowserChangesListenChannel, adsUrl);
-        assertEquals(shortResponse, shortResponse1);
 
     }
 

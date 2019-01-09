@@ -1,13 +1,10 @@
 package bluebomb.urlshortener.database;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Date;
-
+import bluebomb.urlshortener.database.api.DatabaseApi;
+import bluebomb.urlshortener.exceptions.DatabaseInternalException;
+import bluebomb.urlshortener.model.ClickStat;
+import bluebomb.urlshortener.model.RedirectURL;
+import bluebomb.urlshortener.model.Stats;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,9 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import bluebomb.urlshortener.database.api.DatabaseApi;
-import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.model.RedirectURL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -40,7 +41,7 @@ public class DatabaseServicesTest {
         sequence = databaseApi.createShortURL("shortenedURL", "ad_url");
 
         RedirectURL red = new RedirectURL(10, "ad_url");
-        assertTrue(databaseApi.getAd(sequence) instanceof RedirectURL);
+        assertNotNull(databaseApi.getAd(sequence));
         assertEquals(databaseApi.getAd(sequence), red);
     }
 
@@ -81,11 +82,56 @@ public class DatabaseServicesTest {
 
     @Test
     public void verifySeqGen(){
+        assertEquals(databaseApi.toSequence(0), "");
+        assertEquals(databaseApi.toSequence(1), "0");
         assertEquals(databaseApi.toSequence(10), "9");
         assertEquals(databaseApi.toSequence(11), "a");
         assertEquals(databaseApi.toSequence(36), "z");
     }
 
+    @Test
+    public void verifyGlobalStats() throws DatabaseInternalException {
+        List<ClickStat> globalStats = databaseApi.getGlobalStats(NOT_EXIST, "os");
+        assertTrue(globalStats.isEmpty());
+
+        globalStats = databaseApi.getGlobalStats("0", "os");
+        assertEquals(2, globalStats.size());
+        ClickStat clickStat = new ClickStat("ubuntu", 77);
+        assertTrue(globalStats.contains(clickStat));
+        clickStat = new ClickStat("windows", 55);
+        assertTrue(globalStats.contains(clickStat));
+    }
+
+    @Test
+    public void verifyDailyStats() throws DatabaseInternalException, ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date from = sdf.parse("25/12/2018");
+        Date to = sdf.parse("27/12/2018");
+
+        List<Stats> dailyStats = databaseApi.getDailyStats(NOT_EXIST, "os", from, to,"desc", 2);
+
+        assertTrue(dailyStats.isEmpty());
+
+        dailyStats = databaseApi.getDailyStats("0", "os", from, to,"desc", 4);
+        assertEquals(2, dailyStats.size());
+
+        List<ClickStat> clickStats = new ArrayList<>();
+        clickStats.add(new ClickStat("ubuntu", 50));
+        clickStats.add(new ClickStat("windows", 10));
+
+
+        Stats stats = new Stats(from, clickStats);
+
+        assertEquals(stats, dailyStats.get(0));
+
+        clickStats = new ArrayList<>();
+        clickStats.add(new ClickStat("windows", 30));
+        clickStats.add(new ClickStat("ubuntu", 26));
+
+
+        stats = new Stats(to, clickStats);
+        assertEquals(stats, dailyStats.get(1));
+    }
 
     // EXCEPTION TESTS
 
@@ -151,13 +197,19 @@ public class DatabaseServicesTest {
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStatsNotSupported() throws DatabaseInternalException {
-        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
-                                NOT_EXIST, 2);
+        databaseApi.getDailyStats("0", NOT_EXIST, new Date(), new Date(),
+                                "asc", 2);
+    }
+
+    @Test(expected = DatabaseInternalException.class)
+    public void verifyExceptionGetDailyStatsNotSupported2() throws DatabaseInternalException {
+        databaseApi.getDailyStats("0", "os", new Date(), new Date(),
+                NOT_EXIST, 2);
     }
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStats() throws DatabaseInternalException {
-        databaseApi.getDailyStats(null, "string", new Date(), new Date(), 
+        databaseApi.getDailyStats(null, "os", new Date(), new Date(),
                                 "asc", 2);
     }
 
@@ -169,25 +221,26 @@ public class DatabaseServicesTest {
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStats3() throws DatabaseInternalException {
-        databaseApi.getDailyStats("0", "string", null, new Date(), 
+        databaseApi.getDailyStats("0", "os", null, new Date(),
                                 "asc", 2);
     }
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStats4() throws DatabaseInternalException {
-        databaseApi.getDailyStats("0", "string", new Date(), null, 
+        databaseApi.getDailyStats("0", "os", new Date(), null,
                                 "asc", 2);
     }
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStats5() throws DatabaseInternalException {
-        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
+        databaseApi.getDailyStats("0", "os", new Date(), new Date(),
                                 null, 2);
     }
 
     @Test(expected = DatabaseInternalException.class)
     public void verifyExceptionGetDailyStats6() throws DatabaseInternalException {
-        databaseApi.getDailyStats("0", "string", new Date(), new Date(), 
+        databaseApi.getDailyStats("0", "os", new Date(), new Date(),
                                 "asc", null);
     }
 }
+

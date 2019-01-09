@@ -53,28 +53,6 @@ public class ShortResponse {
         this.adsUrl = hadAds ? backEndURI + "/" + sequence + "/ads" : "";
     }
 
-    public ShortResponse(String sequence, String shortedUrl, String qrReferenceUrl, String infoUrlRequestChannel,
-                         String infoUrlListenChannel, String infoUrlErrorChannel, String dailyStatsOperatingSystemUrl,
-                         String dailyStatsBrowserUrl, String globalStatsRequestOperatingSystemChannel,
-                         String globalStatsRequestBrowserChannel, String globalStatsListenChannel,
-                         String globalStatsErrorChannel, String globalStatsOperatingSystemChangesListenChannel,
-                         String globalStatsBrowserChangesListenChannel, String adsUrl) {
-        this.sequence = sequence;
-        this.shortedUrl = shortedUrl;
-        this.qrReferenceUrl = qrReferenceUrl;
-        this.infoUrlRequestChannel = infoUrlRequestChannel;
-        this.infoUrlListenChannel = infoUrlListenChannel;
-        this.infoUrlErrorChannel = infoUrlErrorChannel;
-        this.dailyStatsOperatingSystemUrl = dailyStatsOperatingSystemUrl;
-        this.dailyStatsBrowserUrl = dailyStatsBrowserUrl;
-        this.globalStatsRequestOperatingSystemChannel = globalStatsRequestOperatingSystemChannel;
-        this.globalStatsRequestBrowserChannel = globalStatsRequestBrowserChannel;
-        this.globalStatsListenChannel = globalStatsListenChannel;
-        this.globalStatsErrorChannel = globalStatsErrorChannel;
-        this.globalStatsOperatingSystemChangesListenChannel = globalStatsOperatingSystemChangesListenChannel;
-        this.globalStatsBrowserChangesListenChannel = globalStatsBrowserChangesListenChannel;
-        this.adsUrl = adsUrl;
-    }
 
     public String getSequence() {
         return sequence;

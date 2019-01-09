@@ -1,7 +1,7 @@
 package bluebomb.urlshortener.exceptions;
 
 public class StatsGlobalException extends Exception{
-    private String username;
+    private final String username;
 
     public StatsGlobalException(String message, String username) {
         super(message);

@@ -6,7 +6,6 @@ import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 import bluebomb.urlshortener.services.UserAgentDetector;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -84,7 +83,7 @@ public class StatsController {
      */
     @CrossOrigin
     @RequestMapping(value = "/{element}/support", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ArrayList<StatsAgent> getSupportedAgents(@PathVariable(value = "element") String element) {
+    public List<StatsAgent> getSupportedAgents(@PathVariable(value = "element") String element) {
         ArrayList<StatsAgent> statsAgents;
         switch (element.toLowerCase()) {
             case "os":

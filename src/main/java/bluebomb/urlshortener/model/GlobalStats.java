@@ -2,6 +2,7 @@ package bluebomb.urlshortener.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Global stats used in realtime stats in WebSockets
@@ -49,5 +50,20 @@ public class GlobalStats {
 
     public void setParameter(String parameter) {
         this.parameter = parameter;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GlobalStats that = (GlobalStats) o;
+        return Objects.equals(sequence, that.sequence) &&
+                Objects.equals(parameter, that.parameter) &&
+                Objects.equals(stats, that.stats);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sequence, parameter, stats);
     }
 }

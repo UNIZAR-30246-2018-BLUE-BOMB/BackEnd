@@ -5,7 +5,10 @@ import eu.bitwalker.useragentutils.UserAgent;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -13,6 +16,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class UserAgentDetector {
+
+    private static final String OTHER = "Other";
+
     private Set<String> supportedOperatingSystems = new HashSet<>(Arrays.asList(
             "Windows",
             "Mac OS X",
@@ -21,7 +27,7 @@ public class UserAgentDetector {
             "Android",
             "iOS",
             "Symbian OS",
-            "Other"
+            OTHER
     ));
 
     /**
@@ -42,7 +48,7 @@ public class UserAgentDetector {
     @Cacheable("osDetectorCache")
     public String detectOS(String userAgentString) {
         String operatingSystemName = UserAgent.parseUserAgentString(userAgentString).getOperatingSystem().getGroup().getName();
-        return supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : "Other";
+        return supportedOperatingSystems.contains(operatingSystemName) ? operatingSystemName : OTHER;
     }
 
     /**
@@ -55,7 +61,7 @@ public class UserAgentDetector {
             "Microsoft Edge",
             "Safari",
             "Opera",
-            "Other"
+            OTHER
     ));
 
     /**
@@ -76,6 +82,6 @@ public class UserAgentDetector {
     @Cacheable("browserDetectorCache")
     public String detectBrowser(String userAgentString) {
         String browserName = UserAgent.parseUserAgentString(userAgentString).getBrowser().getGroup().getName();
-        return supportedBrowsers.contains(browserName) ? browserName : "Other";
+        return supportedBrowsers.contains(browserName) ? browserName : OTHER;
     }
 }

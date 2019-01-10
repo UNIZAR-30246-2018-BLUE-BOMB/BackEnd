@@ -40,7 +40,7 @@ public class InfoController {
      * Database api instance
      */
     @Autowired
-	DatabaseApi databaseApi;
+    DatabaseApi databaseApi;
 
     /**
      * Send original url to subscriber
@@ -180,15 +180,22 @@ public class InfoController {
      * @param e exception captured
      */
     @SuppressWarnings("unused")
-    @MessageExceptionHandler({DatabaseInternalException.class, ShortenedInfoException.class, InterruptedException.class})
-    public void errorHandlerGetInfo(Exception e) {
-        if (e instanceof ShortenedInfoException) {
-            // User error
-            ShortenedInfoException ex = (ShortenedInfoException) e;
-            sendErrorToSubscriber(ex.getUsername(), ex.getMessage(), simpMessagingTemplate);
-        } else {
-            // Server error
-            logger.error(e.getMessage());
-        }
+    @MessageExceptionHandler(ShortenedInfoException.class)
+    public void userErrorHandlerGetInfo(Exception e) {
+        // User error
+        ShortenedInfoException ex = (ShortenedInfoException) e;
+        sendErrorToSubscriber(ex.getUsername(), ex.getMessage(), simpMessagingTemplate);
+    }
+
+    /**
+     * Catch /{sequence}/info internal produced Exceptions
+     *
+     * @param e exception captured
+     */
+    @SuppressWarnings("unused")
+    @MessageExceptionHandler({DatabaseInternalException.class, InterruptedException.class})
+    public void internalErrorHandlerGetInfo(Exception e) {
+        // Server error
+        logger.error(e.getMessage());
     }
 }

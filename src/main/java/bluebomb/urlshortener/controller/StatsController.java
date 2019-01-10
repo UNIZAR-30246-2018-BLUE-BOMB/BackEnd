@@ -66,7 +66,7 @@ public class StatsController {
 
         // Check sequence
         if (!databaseApi.containsSequence(sequence)) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Sequence not exist");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sequence not exist");
         } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
         }

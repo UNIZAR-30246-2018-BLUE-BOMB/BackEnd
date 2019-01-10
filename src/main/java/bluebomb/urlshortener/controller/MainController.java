@@ -2,7 +2,6 @@ package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.exceptions.QrGeneratorBadParametersException;
 import bluebomb.urlshortener.exceptions.QrGeneratorInternalException;
 import bluebomb.urlshortener.model.ShortResponse;
@@ -135,13 +134,7 @@ public class MainController {
                         @RequestHeader("Accept") String acceptHeader)
             throws DatabaseInternalException, QrGeneratorBadParametersException, QrGeneratorInternalException {
         // Check sequence
-        if (!databaseApi.containsSequence(sequence)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sequence not exist");
-        } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
-        } else if (!availableURIChecker.isSequenceAdsAvailable(sequence)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated ad is not reachable");
-        }
+        checkSequence(sequence);
 
         // Check colors
         String goodFormColorsRegExp = "0x[a-f0-9A-F]{8}";
@@ -188,6 +181,21 @@ public class MainController {
         // Return generated QR
         return qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
                 errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
+    }
+
+    /**
+     * Check if sequence is available and reachable
+     * @param sequence sequence
+     * @throws DatabaseInternalException if database fails
+     */
+    private void checkSequence( String sequence) throws DatabaseInternalException {
+        if (!databaseApi.containsSequence(sequence)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sequence not exist");
+        } else if (!availableURIChecker.isSequenceAvailable(sequence)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not reachable");
+        } else if (!availableURIChecker.isSequenceAdsAvailable(sequence)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated ad is not reachable");
+        }
     }
 
     /**

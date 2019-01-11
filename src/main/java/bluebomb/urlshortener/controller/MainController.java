@@ -18,6 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
@@ -67,6 +71,15 @@ public class MainController {
      * @param secondsToRedirect Seconds to redirect to complete URL
      * @return Shortened URL and common related URLs
      */
+    @GetMapping("/test")
+    public String test() throws ParseException, DatabaseInternalException {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date from = sdf.parse("25/12/2018");
+        Date to = sdf.parse("27/12/2018");
+        databaseApi.addStats("0", "test", "test");
+        return databaseApi.getDailyStats("0", "os", from, to,"desc", 4).toString();
+    }
+
     @CrossOrigin
     @RequestMapping(value = "/short", method = POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public ShortResponse getShortURI(@RequestParam(value = "headURL") String headURL,

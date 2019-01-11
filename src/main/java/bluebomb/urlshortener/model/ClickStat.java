@@ -43,5 +43,13 @@ public class ClickStat {
     public int hashCode() {
         return Objects.hash(agent, clicks);
     }
+
+    @Override
+    public String toString() {
+        return "ClickStat{" +
+                "agent='" + agent + '\'' +
+                ", clicks=" + clicks +
+                '}';
+    }
 }
 

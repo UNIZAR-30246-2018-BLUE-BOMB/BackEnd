@@ -12,7 +12,7 @@ create unique index urls_index on short_url(url,redirect,time);
 
 create table browser_stat
 (
-    seq integer not null,
+    seq varchar2(255) not null,
     date date not null,
     browser varchar2(128) not null,
     clicks integer DEFAULT 0,
@@ -22,7 +22,7 @@ create table browser_stat
 
 create table os_stat
 (
-    seq integer not null,
+    seq varchar2(255) not null,
     date date not null,
     os varchar2(128) not null,
     clicks integer DEFAULT 0,

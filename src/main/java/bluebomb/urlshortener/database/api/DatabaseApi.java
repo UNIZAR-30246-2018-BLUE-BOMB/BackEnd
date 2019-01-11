@@ -56,7 +56,7 @@ public class DatabaseApi {
      */
     private List<Stats> formatDailyStats(List<ClickStatDB> input) {
         // If input is empty
-        if (input == null || input.size() == 0) {
+        if (input == null || input.isEmpty()) {
             return new ArrayList<>();
         }
 

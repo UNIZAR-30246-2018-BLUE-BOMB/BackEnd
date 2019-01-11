@@ -6,13 +6,17 @@ import bluebomb.urlshortener.services.HTMLDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.services.AvailableURIChecker;
+
+import java.util.concurrent.TimeUnit;
 
 @RestController
 public class RedirectController {
@@ -20,6 +24,11 @@ public class RedirectController {
      * Logger instance
      */
     private static Logger logger = LoggerFactory.getLogger(RedirectController.class);
+
+    /**
+     * TTL of the /{sequence}/qr response for the browser cache in seconds
+     */
+    private static final int browserGetAdTTL = 3600;
 
     /**
      * HTML downloader service
@@ -43,7 +52,7 @@ public class RedirectController {
      */
     @CrossOrigin
     @RequestMapping(value = "{sequence}/ads", produces = {MediaType.TEXT_HTML_VALUE})
-    public String ads(@PathVariable(value = "sequence") String sequence) throws DatabaseInternalException, DownloadHTMLInternalException {
+    public ResponseEntity<String> ads(@PathVariable(value = "sequence") String sequence) throws DatabaseInternalException, DownloadHTMLInternalException {
         // Check sequence exist
         if (!databaseApi.containsSequence(sequence)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Original URL is not available");
@@ -65,7 +74,9 @@ public class RedirectController {
         }
 
         // Download the ad page
-        return htmlDownloader.download(adsURL.getInterstitialURL());
+        return ResponseEntity.status(HttpStatus.OK)
+                .cacheControl(CacheControl.maxAge(browserGetAdTTL, TimeUnit.SECONDS))
+                .body(htmlDownloader.download(adsURL.getInterstitialURL()));
     }
 
     @ResponseStatus(value= HttpStatus.INTERNAL_SERVER_ERROR,

@@ -13,22 +13,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
 public class MainController {
-
     /**
      * Logger instance
      */
     private static Logger logger = LoggerFactory.getLogger(RedirectController.class);
 
+    /**
+     * Empty value
+     */
     private static final String EMPTY = "empty";
+
+    /**
+     * TTL of the /short response for the browser cache in seconds
+     */
+    private static final int browserShortTTL = 3600;
+
+    /**
+     * TTL of the /{sequence}/qr response for the browser cache in seconds
+     */
+    private static final int browserGetQrTTL = 3600;
+
     /**
      * Front end base redirect page uri
      */
@@ -61,9 +78,9 @@ public class MainController {
 
     @CrossOrigin
     @RequestMapping(value = "/short", method = POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ShortResponse getShortURI(@RequestParam(value = "headURL") String headURL,
-                                     @RequestParam(value = "interstitialURL", required = false) String interstitialURL,
-                                     @RequestParam(value = "secondsToRedirect", required = false) Integer secondsToRedirect)
+    public ResponseEntity<ShortResponse> getShortURI(@RequestParam(value = "headURL") String headURL,
+                                                     @RequestParam(value = "interstitialURL", required = false) String interstitialURL,
+                                                     @RequestParam(value = "secondsToRedirect", required = false) Integer secondsToRedirect)
             throws DatabaseInternalException {
         // Original URL is not reachable
         if (!availableURIChecker.isURLAvailable(headURL)) {
@@ -92,7 +109,9 @@ public class MainController {
             availableURIChecker.registerURL(interstitialURL);
         }
 
-        return new ShortResponse(sequence, interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .cacheControl(CacheControl.maxAge(browserShortTTL, TimeUnit.SECONDS))
+                .body(new ShortResponse(sequence, interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI));
     }
 
     /**
@@ -116,14 +135,14 @@ public class MainController {
      */
     @CrossOrigin
     @RequestMapping(value = "/{sequence}/qr", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public byte[] getQr(@PathVariable(value = "sequence") String sequence,
-                        @RequestParam(value = "size", required = false) Size size,
-                        @RequestParam(value = "errorCorrection", required = false, defaultValue = "L") String errorCorrection,
-                        @RequestParam(value = "margin", required = false, defaultValue = "0") Integer margin,
-                        @RequestParam(value = "qrColor", required = false, defaultValue = "0xFF000000") String qrColorIm,
-                        @RequestParam(value = "backgroundColor", required = false, defaultValue = "0xFFFFFFFF") String backgroundColorIm,
-                        @RequestParam(value = "logo", required = false) String logo,
-                        @RequestHeader("Accept") String acceptHeader)
+    public ResponseEntity<byte[]> getQr(@PathVariable(value = "sequence") String sequence,
+                                        @RequestParam(value = "size", required = false) Size size,
+                                        @RequestParam(value = "errorCorrection", required = false, defaultValue = "L") String errorCorrection,
+                                        @RequestParam(value = "margin", required = false, defaultValue = "0") Integer margin,
+                                        @RequestParam(value = "qrColor", required = false, defaultValue = "0xFF000000") String qrColorIm,
+                                        @RequestParam(value = "backgroundColor", required = false, defaultValue = "0xFFFFFFFF") String backgroundColorIm,
+                                        @RequestParam(value = "logo", required = false) String logo,
+                                        @RequestHeader("Accept") String acceptHeader)
             throws DatabaseInternalException, QrGeneratorBadParametersException, QrGeneratorInternalException {
         // Check sequence
         checkSequence(sequence);
@@ -171,16 +190,19 @@ public class MainController {
         }
 
         // Return generated QR
-        return qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
-                errorCorrectionLevel, margin, qrColor, backgroundColor, logo);
+        return ResponseEntity.status(HttpStatus.OK)
+                .cacheControl(CacheControl.maxAge(browserGetQrTTL, TimeUnit.SECONDS))
+                .body(qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
+                        errorCorrectionLevel, margin, qrColor, backgroundColor, logo));
     }
 
     /**
      * Check if sequence is available and reachable
+     *
      * @param sequence sequence
      * @throws DatabaseInternalException if database fails
      */
-    private void checkSequence( String sequence) throws DatabaseInternalException {
+    private void checkSequence(String sequence) throws DatabaseInternalException {
         if (!databaseApi.containsSequence(sequence)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Sequence not exist");
         } else if (!availableURIChecker.isSequenceAvailable(sequence)) {

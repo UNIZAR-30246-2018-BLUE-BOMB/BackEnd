@@ -2,7 +2,6 @@ package bluebomb.urlshortener.controller;
 
 import bluebomb.urlshortener.database.api.DatabaseApi;
 import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
 import bluebomb.urlshortener.services.AvailableURIChecker;

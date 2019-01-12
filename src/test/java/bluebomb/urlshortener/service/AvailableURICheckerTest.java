@@ -82,14 +82,14 @@ public class AvailableURICheckerTest {
 
     @Test
     public void automaticAvailableTester() {
-        final String headURL = "http://urlquenoexiste.uk";
+        final String headURL = "https://moodle2.unizar.es/add/";
 
         // A petition from an URL not registered that not exist must be great
         long before = System.currentTimeMillis();
         availableURIChecker.isURLAvailable(headURL);
         long after = System.currentTimeMillis();
 
-        assert (after - before) >= 100;
+        assert (after - before) >= 5;
 
         availableURIChecker.registerURL(headURL);
         availableURIChecker.checkIfURLSAreReachableLoop();
@@ -98,6 +98,6 @@ public class AvailableURICheckerTest {
         before = System.currentTimeMillis();
         availableURIChecker.isURLAvailable(headURL);
         after = System.currentTimeMillis();
-        assert (after - before) < 50;
+        assert (after - before) < 5;
     }
 }

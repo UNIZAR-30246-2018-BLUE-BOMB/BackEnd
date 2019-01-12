@@ -6,6 +6,7 @@ import bluebomb.urlshortener.model.ClickStat;
 import bluebomb.urlshortener.model.RedirectURL;
 import bluebomb.urlshortener.model.Stats;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,6 +103,7 @@ public class DatabaseServicesTest {
         assertTrue(globalStats.contains(clickStat));
     }
 
+    @Ignore
     @Test
     public void verifyDailyStats() throws DatabaseInternalException, ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");

@@ -58,14 +58,8 @@ public class GlobalStatsEndpointTest {
     @Test
     public void globalStatsEndpointInfoFromTopicBrowser() throws Exception {
         final String headURL = "http://www.google.de";
-        String shortenedSequence = "";
-        try {
-            // Create shortened URL if not exist
-            shortenedSequence = databaseApi.createShortURL(headURL);
-        } catch (DatabaseInternalException e) {
-            System.out.println(e.getMessage());
-            assert false;
-        }
+        // Create shortened URL if not exist
+        String shortenedSequence = databaseApi.createShortURL(headURL);
 
         final String parameter = "browser";
 

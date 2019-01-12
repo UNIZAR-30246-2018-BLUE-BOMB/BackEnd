@@ -28,7 +28,7 @@ public class AvailableURIChecker {
     /**
      * Time between url available check in milliseconds
      */
-    private static final int TIME_BETWEEN_URL_AVAILABLE_CHECK = 1000;
+    private static final int TIME_BETWEEN_URL_AVAILABLE_CHECK = 10000;
 
     /**
      * Reached URLs list
@@ -108,7 +108,7 @@ public class AvailableURIChecker {
     }
 
     /**
-     * Register url in the list.
+     * Register url to be automatic checked if is reachable.
      *
      * @param url to be registered
      */

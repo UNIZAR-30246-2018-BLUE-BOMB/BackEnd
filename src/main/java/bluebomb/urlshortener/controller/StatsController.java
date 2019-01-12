@@ -76,11 +76,16 @@ public class StatsController {
         }
 
         // Check and set startDate and endDate
-        // If startDate is not setted, we set the older date that we can
+        // If startDate is not set, we set the older date that we can
         if (startDate == null) startDate = new Date(0);
 
-        // If endDate is not setted, we set the newer date that we can
+        // If endDate is not set, we set the newer date that we can
         if (endDate == null) endDate = new Date();
+
+        if (endDate.compareTo(new Date()) >= 0) {
+            // Check if end date is greater than now
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "endDate must be before or equal than today");
+        }
 
         if (endDate.compareTo(startDate) < 0) {
             // endDate is before than startDate
@@ -89,7 +94,6 @@ public class StatsController {
 
         // Get STATS
         return databaseApi.getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
-
     }
 
     /**

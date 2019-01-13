@@ -22,8 +22,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-
+@SpringBootTest
 public class DatabaseServicesTest {
     @Autowired
     DatabaseApi databaseApi;

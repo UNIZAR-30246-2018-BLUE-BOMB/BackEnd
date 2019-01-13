@@ -45,7 +45,6 @@ repositories {
     maven { url "https://repo.spring.io/milestone" }
 }
 
-
 dependencies {
     // Spring
     implementation('org.springframework.boot:spring-boot-starter')
@@ -54,6 +53,10 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-websocket")
     compile('org.springframework.boot:spring-boot-starter-jdbc')
     compile("org.springframework.boot:spring-boot-starter-thymeleaf")
+
+    // Cache system
+    compile("org.springframework.boot:spring-boot-starter-cache")
+    compile ("com.github.ben-manes.caffeine:caffeine:2.6.2")
     
     // Database
     compile('com.h2database:h2')
@@ -71,6 +74,6 @@ dependencies {
 
     // Download HTML
     compile group: 'org.jsoup', name: 'jsoup', version: '1.11.3'
-    
+
     testImplementation('org.springframework.boot:spring-boot-starter-test')
 }

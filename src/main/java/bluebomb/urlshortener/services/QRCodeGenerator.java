@@ -49,9 +49,9 @@ public class QRCodeGenerator {
      *
      * @param url                  Url to be inserted as content
      * @param format               Generated image format
-     * @param size                 Generated image size
+     * @param size                 Generated image size in px
      * @param errorCorrectionLevel Generated image correction level
-     * @param margin               Generated image correction margins
+     * @param margin               Generated image margins in px
      * @param qrColor              Generated image QR color
      * @param backgroundColor      Generated image background color
      * @param logoURL              Generated image optional embedded logo
@@ -148,7 +148,8 @@ public class QRCodeGenerator {
         // Add options
         Map<EncodeHintType, Object> hints = new HashMap<>();
         hints.put(EncodeHintType.ERROR_CORRECTION, errorCorrectionLevel);
-        hints.put(EncodeHintType.MARGIN, margin);
+        hints.put(EncodeHintType.MARGIN, size.getHeight() > size.getWidth() ?
+                100 * margin / size.getHeight() : 100 * margin / size.getWidth());
 
         try {
             QRCodeWriter qrCodeWriter = new QRCodeWriter();

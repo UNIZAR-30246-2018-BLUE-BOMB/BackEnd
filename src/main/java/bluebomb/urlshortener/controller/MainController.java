@@ -124,7 +124,8 @@ public class MainController {
      * Generates Qr for specific URL
      *
      * @param sequence          Shortened URL sequence code
-     * @param size              Size of returned QR
+     * @param height            Height of returned QR
+     * @param width             Width of returned QR
      * @param errorCorrection   Error correction level (L = ~7% correction, M = ~15% correction, Q = ~25% correction, H = ~30% correction)
      * @param margin            Horizontal and vertical margin of the QR in pixels
      * @param qrColorIm         Color of the QR in hexadecimal
@@ -136,7 +137,8 @@ public class MainController {
     @CrossOrigin
     @RequestMapping(value = "/{sequence}/qr", produces = {MediaType.IMAGE_PNG_VALUE, MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public ResponseEntity<byte[]> getQr(@PathVariable(value = "sequence") String sequence,
-                                        @RequestParam(value = "size", required = false) Size size,
+                                        @RequestParam(value = "height", required = false, defaultValue = "500") Integer height,
+                                        @RequestParam(value = "width", required = false, defaultValue = "500") Integer width,
                                         @RequestParam(value = "errorCorrection", required = false, defaultValue = "L") String errorCorrection,
                                         @RequestParam(value = "margin", required = false, defaultValue = "0") Integer margin,
                                         @RequestParam(value = "qrColor", required = false, defaultValue = "0xFF000000") String qrColorIm,
@@ -163,12 +165,9 @@ public class MainController {
         }
 
         // Check Size
-        if (size == null) {
-            size = new Size(500, 500);
-        } else {
-            if (size.getHeight() <= 0 || size.getWidth() <= 0) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Size is incorrect");
-            }
+        Size size = new Size(height, width);
+        if (size.getHeight() <= 0 || size.getWidth() <= 0) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Size is incorrect");
         }
 
         // Check margins

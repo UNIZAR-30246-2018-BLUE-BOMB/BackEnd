@@ -23,7 +23,6 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-
 public class DatabaseServicesTest {
     @Autowired
     DatabaseApi databaseApi;

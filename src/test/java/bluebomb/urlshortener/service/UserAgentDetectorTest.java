@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 
 public class UserAgentDetectorTest {
     @Autowired

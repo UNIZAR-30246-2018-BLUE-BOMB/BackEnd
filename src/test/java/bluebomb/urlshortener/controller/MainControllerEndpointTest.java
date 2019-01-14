@@ -15,6 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.Objects;
 
 import static org.junit.Assert.*;
@@ -32,7 +33,7 @@ public class MainControllerEndpointTest {
     @Test
     public void verifyShortEndPoint() {
 
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "http://www.google.es");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -40,11 +41,12 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
 
         assertEquals(201, responseEntity.getStatusCode().value());
@@ -57,7 +59,7 @@ public class MainControllerEndpointTest {
     @Test
     public void verifyShortEndPoint2() {
 
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "http://www.google.es");
         map.add("interstitialURL", "http://www.google.com");
 
@@ -67,11 +69,12 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
 
         assertEquals(201, responseEntity.getStatusCode().value());
@@ -85,7 +88,7 @@ public class MainControllerEndpointTest {
     @Test
     public void verifyShortEndPoint3() {
 
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "http://www.google.es");
         map.add("interstitialURL", "http://www.google.com");
         map.add("secondsToRedirect", "100");
@@ -96,11 +99,12 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
 
         assertEquals(201, responseEntity.getStatusCode().value());
@@ -114,7 +118,7 @@ public class MainControllerEndpointTest {
 
     @Test(expected = HttpClientErrorException.class)
     public void verifyExceptionShort() throws HttpClientErrorException {
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "notrechable");
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -122,17 +126,18 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
     }
 
     @Test(expected = HttpClientErrorException.class)
     public void verifyExceptionShort2() throws HttpClientErrorException {
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "http://www.google.es");
         map.add("interstitialURL", "notrechable");
         HttpHeaders headers = new HttpHeaders();
@@ -141,17 +146,18 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
     }
 
     @Test(expected = HttpClientErrorException.class)
     public void verifyExceptionShort3() throws HttpClientErrorException {
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("headURL", "http://www.google.es");
         map.add("interstitialURL", null);
         HttpHeaders headers = new HttpHeaders();
@@ -160,13 +166,30 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
-                new ParameterizedTypeReference<ShortResponse>(){}
+                new ParameterizedTypeReference<ShortResponse>() {
+                }
         );
     }
 
+    @Test
+    public void qrCorrect() throws Exception {
+        String sequence = databaseApi.createShortURL("http://www.google.it");
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Collections.singletonList(MediaType.IMAGE_PNG));
+        HttpEntity<String> entity = new HttpEntity<>(null, headers);
+        ResponseEntity<byte[]> responseEntity = restTemplate.exchange("http://localhost:" + port
+                        + "/" + sequence + "/qr",
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<byte[]>() {
+                }
+        );
+        assert responseEntity.getBody().length > 0;
+    }
 
 }

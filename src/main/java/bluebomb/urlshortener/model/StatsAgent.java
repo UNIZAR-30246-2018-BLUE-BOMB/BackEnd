@@ -9,6 +9,9 @@ public class StatsAgent {
         this.agent = agent;
     }
 
+    public StatsAgent() {
+    }
+
     public String getAgent() {
         return agent;
     }

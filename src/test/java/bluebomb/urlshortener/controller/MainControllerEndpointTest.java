@@ -12,10 +12,12 @@ import org.springframework.http.*;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import java.util.Objects;
+
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -49,6 +51,122 @@ public class MainControllerEndpointTest {
 
         assertNotNull(responseEntity);
 
-        assertEquals("", responseEntity.getBody().getAdsUrl());
+        assertEquals("", Objects.requireNonNull(responseEntity.getBody()).getAdsUrl());
     }
+
+    @Test
+    public void verifyShortEndPoint2() {
+
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        map.add("headURL", "http://www.google.es");
+        map.add("interstitialURL", "http://www.google.com");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+                        + "/short",
+                HttpMethod.POST,
+                request,
+                new ParameterizedTypeReference<ShortResponse>(){}
+        );
+
+        assertEquals(201, responseEntity.getStatusCode().value());
+
+        assertNotNull(responseEntity);
+
+        assertNotEquals("", Objects.requireNonNull(responseEntity.getBody()).getAdsUrl());
+    }
+
+
+    @Test
+    public void verifyShortEndPoint3() {
+
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        map.add("headURL", "http://www.google.es");
+        map.add("interstitialURL", "http://www.google.com");
+        map.add("secondsToRedirect", "100");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+                        + "/short",
+                HttpMethod.POST,
+                request,
+                new ParameterizedTypeReference<ShortResponse>(){}
+        );
+
+        assertEquals(201, responseEntity.getStatusCode().value());
+
+        assertNotNull(responseEntity);
+
+        assertNotEquals("", Objects.requireNonNull(responseEntity.getBody()).getAdsUrl());
+    }
+
+    // EXCEPTIONS
+
+    @Test(expected = HttpClientErrorException.class)
+    public void verifyExceptionShort() throws HttpClientErrorException {
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        map.add("headURL", "notrechable");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+                        + "/short",
+                HttpMethod.POST,
+                request,
+                new ParameterizedTypeReference<ShortResponse>(){}
+        );
+    }
+
+    @Test(expected = HttpClientErrorException.class)
+    public void verifyExceptionShort2() throws HttpClientErrorException {
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        map.add("headURL", "http://www.google.es");
+        map.add("interstitialURL", "notrechable");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+                        + "/short",
+                HttpMethod.POST,
+                request,
+                new ParameterizedTypeReference<ShortResponse>(){}
+        );
+    }
+
+    @Test(expected = HttpClientErrorException.class)
+    public void verifyExceptionShort3() throws HttpClientErrorException {
+        MultiValueMap<String, String> map= new LinkedMultiValueMap<>();
+        map.add("headURL", "http://www.google.es");
+        map.add("interstitialURL", null);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:"+ port
+                        + "/short",
+                HttpMethod.POST,
+                request,
+                new ParameterizedTypeReference<ShortResponse>(){}
+        );
+    }
+
+
 }

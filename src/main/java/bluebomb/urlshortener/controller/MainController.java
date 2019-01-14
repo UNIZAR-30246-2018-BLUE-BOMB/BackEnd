@@ -39,12 +39,12 @@ public class MainController {
     /**
      * TTL of the /short response for the browser cache in seconds
      */
-    private static final int browserShortTTL = 3600;
+    private static final int BROWSER_SHORT_TTL = 3600;
 
     /**
      * TTL of the /{sequence}/qr response for the browser cache in seconds
      */
-    private static final int browserGetQrTTL = 3600;
+    private static final int BROWSER_GET_QR_TTL = 3600;
 
     /**
      * Front end base redirect page uri
@@ -110,7 +110,7 @@ public class MainController {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .cacheControl(CacheControl.maxAge(browserShortTTL, TimeUnit.SECONDS))
+                .cacheControl(CacheControl.maxAge(BROWSER_SHORT_TTL, TimeUnit.SECONDS))
                 .body(new ShortResponse(sequence, interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI));
     }
 
@@ -190,7 +190,7 @@ public class MainController {
 
         // Return generated QR
         return ResponseEntity.status(HttpStatus.OK)
-                .cacheControl(CacheControl.maxAge(browserGetQrTTL, TimeUnit.SECONDS))
+                .cacheControl(CacheControl.maxAge(BROWSER_GET_QR_TTL, TimeUnit.SECONDS))
                 .body(qrCodeGenerator.generate(frontEndRedirectURI + "/" + sequence, responseType, size,
                         errorCorrectionLevel, margin, qrColor, backgroundColor, logo));
     }

@@ -1,7 +1,10 @@
 package bluebomb.urlshortener.controller;
 
+import bluebomb.urlshortener.database.api.DatabaseApi;
+import bluebomb.urlshortener.exceptions.DatabaseInternalException;
 import bluebomb.urlshortener.exceptions.DownloadHTMLInternalException;
 import bluebomb.urlshortener.model.RedirectURL;
+import bluebomb.urlshortener.services.AvailableURIChecker;
 import bluebomb.urlshortener.services.HTMLDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import bluebomb.urlshortener.database.api.DatabaseApi;
-import bluebomb.urlshortener.exceptions.DatabaseInternalException;
-import bluebomb.urlshortener.services.AvailableURIChecker;
 
 import java.util.concurrent.TimeUnit;
 
@@ -28,7 +28,7 @@ public class RedirectController {
     /**
      * TTL of the /{sequence}/qr response for the browser cache in seconds
      */
-    private static final int browserGetAdTTL = 3600;
+    private static final int BROWSER_GET_AD_TTL = 3600;
 
     /**
      * HTML downloader service
@@ -75,7 +75,7 @@ public class RedirectController {
 
         // Download the ad page
         return ResponseEntity.status(HttpStatus.OK)
-                .cacheControl(CacheControl.maxAge(browserGetAdTTL, TimeUnit.SECONDS))
+                .cacheControl(CacheControl.maxAge(BROWSER_GET_AD_TTL, TimeUnit.SECONDS))
                 .body(htmlDownloader.download(adsURL.getInterstitialURL()));
     }
 

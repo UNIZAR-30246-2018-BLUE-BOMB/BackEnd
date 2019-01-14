@@ -6,6 +6,7 @@ import bluebomb.urlshortener.model.Stats;
 import bluebomb.urlshortener.model.StatsAgent;
 import bluebomb.urlshortener.services.AvailableURIChecker;
 import bluebomb.urlshortener.services.UserAgentDetector;
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -78,11 +80,15 @@ public class StatsController {
         // Check and set startDate and endDate
         // If startDate is not set, we set the older date that we can
         if (startDate == null) startDate = new Date(0);
+        startDate = DateUtils.truncate(startDate, Calendar.DAY_OF_MONTH);
 
         // If endDate is not set, we set the newer date that we can
         if (endDate == null) endDate = new Date();
+        endDate = DateUtils.truncate(endDate, Calendar.DAY_OF_MONTH);
 
-        if (endDate.compareTo(new Date()) >= 0) {
+        Date actualServerDate =  DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+        if (actualServerDate.compareTo(endDate) < 0) {
             // Check if end date is greater than now
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "endDate must be before or equal than today");
         }
@@ -95,6 +101,7 @@ public class StatsController {
         // Get STATS
         return databaseApi.getDailyStats(sequence, parameter, startDate, endDate, sortType, maxAmountOfDataToRetrieve);
     }
+
 
     /**
      * User agent detector service

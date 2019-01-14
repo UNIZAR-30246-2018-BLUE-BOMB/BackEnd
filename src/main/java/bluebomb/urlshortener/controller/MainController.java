@@ -111,7 +111,7 @@ public class MainController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .cacheControl(CacheControl.maxAge(BROWSER_SHORT_TTL, TimeUnit.SECONDS))
-                .body(new ShortResponse(sequence, interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI));
+                .body(new ShortResponse(sequence, !interstitialURL.equals(EMPTY), frontEndRedirectURI, backEndURI, backEndWsURI));
     }
 
     /**

@@ -65,7 +65,7 @@ public class InfoEndpointTest {
 
     @Test
     public void infoEndpointWithOutAd() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.al";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -99,7 +99,7 @@ public class InfoEndpointTest {
 
     @Test
     public void infoEndpointWithAd() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.al";
         final Integer secondsToRedirect = 10;
         String shortenedSequence = "";
 

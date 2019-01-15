@@ -106,23 +106,18 @@ public class DatabaseServicesTest {
     public void verifyDailyStats() throws DatabaseInternalException, ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         Date from = sdf.parse("25/12/2016");
-        Date to = sdf.parse("14/01/2019");
+        Date to = sdf.parse("25/12/2018");
 
         List<Stats> dailyStats = databaseApi.getDailyStats(NOT_EXIST, "os", from, to,"desc", 2);
 
         assertTrue(dailyStats.isEmpty());
 
-        String sequence = databaseApi.createShortURL("verifyDailyStats");
-        databaseApi.addStats(sequence, "ubuntu", "chrome");
-        databaseApi.addStats(sequence, "ubuntu", "chrome");
-        databaseApi.addStats(sequence, "windows", "chrome");
-
-        dailyStats = databaseApi.getDailyStats(sequence, "os", from, to,"desc", 10);
+        dailyStats = databaseApi.getDailyStats("0", "os", from, to,"desc", 2);
         assertEquals(1, dailyStats.size());
 
         List<ClickStat> clickStats = new ArrayList<>();
-        ClickStat cs1 = new ClickStat("ubuntu", 2);
-        ClickStat cs2 = new ClickStat("windows", 1);
+        ClickStat cs1 = new ClickStat("ubuntu", 50);
+        ClickStat cs2 = new ClickStat("windows", 10);
         clickStats.add(cs1);
         clickStats.add(cs2);
 

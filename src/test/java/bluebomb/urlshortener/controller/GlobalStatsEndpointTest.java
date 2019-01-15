@@ -57,7 +57,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointInfoFromTopicBrowser() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         // Create shortened URL if not exist
         String shortenedSequence = databaseApi.createShortURL(headURL);
 
@@ -111,7 +111,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointInfoFromTopicOS() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -171,7 +171,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointTotalStatsEmpty() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -228,7 +228,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointTotalStatsAccumulatedOS() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -297,7 +297,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointTotalStatsAccumulatedBrowser() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -366,7 +366,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointInfoFromTopicOSOnChange() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -454,7 +454,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void globalStatsEndpointInfoFromTopicBrowserOnChange() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist
@@ -573,7 +573,7 @@ public class GlobalStatsEndpointTest {
 
     @Test
     public void serverProduceErrorParameter() throws Exception {
-        final String headURL = "http://www.google.de";
+        final String headURL = "http://www.google.as";
         String shortenedSequence = "";
         try {
             // Create shortened URL if not exist

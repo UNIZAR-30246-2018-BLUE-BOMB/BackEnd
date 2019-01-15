@@ -38,4 +38,11 @@ public class UserAgentDetectorTest {
         assertEquals("Firefox", userAgentDetector.detectBrowser(userAgent));
         assertEquals("Linux", userAgentDetector.detectOS(userAgent));
     }
+
+    @Test
+    public void detectUserAgentUnknown() {
+        final String userAgent = "AgenteDeUsuarioQueNoExiste";
+        assertEquals("Other", userAgentDetector.detectBrowser(userAgent));
+        assertEquals("Other", userAgentDetector.detectOS(userAgent));
+    }
 }

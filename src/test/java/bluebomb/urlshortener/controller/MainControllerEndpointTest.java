@@ -126,7 +126,7 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
+        restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
@@ -146,7 +146,7 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
+        restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
@@ -166,7 +166,7 @@ public class MainControllerEndpointTest {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
 
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<ShortResponse> responseEntity = restTemplate.exchange("http://localhost:" + port
+        restTemplate.exchange("http://localhost:" + port
                         + "/short",
                 HttpMethod.POST,
                 request,
@@ -189,7 +189,7 @@ public class MainControllerEndpointTest {
                 new ParameterizedTypeReference<byte[]>() {
                 }
         );
-        assert responseEntity.getBody().length > 0;
+        assert responseEntity.getBody() != null && responseEntity.getBody().length > 0;
     }
 
 }

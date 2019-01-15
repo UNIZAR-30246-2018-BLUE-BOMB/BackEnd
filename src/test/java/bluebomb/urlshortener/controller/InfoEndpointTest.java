@@ -105,7 +105,7 @@ public class InfoEndpointTest {
 
         try {
             // Create shortened URL if not exist
-            shortenedSequence = databaseApi.createShortURL("http://www.google.de", "http://www.unizar.es", secondsToRedirect);
+            shortenedSequence = databaseApi.createShortURL(headURL, "http://www.unizar.es", secondsToRedirect);
         } catch (DatabaseInternalException e) {
             System.out.println(e.getMessage());
             assert false;
